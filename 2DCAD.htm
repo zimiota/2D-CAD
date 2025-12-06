@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta name="format-detection" content="telephone=no">
+  <title>2D-CAD Prototype</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    canvas { background: #f0f0f0; display: block; }
+    #angle-panel {
+      position: absolute;
+      top: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      background: #ffffff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+      white-space: nowrap;
+    }
+    #radius-panel {
+      position: absolute;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      white-space: nowrap;
+    }
+    .box {
+      margin-bottom: 10px;
+    }
+#tabs { display:flex; background:#ddd; }
+.tab-button { flex:1; padding:10px; cursor:pointer; border:none; background:#ccc; }
+.tab-button.active { background:#fff; border-bottom:2px solid #000; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+#tri-center {
+  width:100%;
+  display:flex;
+  justify-content:center;
+  margin-top:20px;
+}
+#triView {
+  border:1px solid #aaa;
+  background:#fff;
+}
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-top: 100px solid #c0d0ff;
+}
+  </style>
+</head>
+<body>
+  <div id="tabs">
+  <button class="tab-button active" data-tab="calc1">A/B CAD</button>
+  <button class="tab-button" data-tab="calc2">2.5D Angle</button>
+  <button class="tab-button" data-tab="calc3">TAB3</button>
+</div>
+<div id="calc1" class="tab-content active">
+  <div id="angle-panel">
+    <label>
+      角度（度数）:
+      <input id="angle-input" type="number" value="0" min="1" max="179">
+    </label>
+  </div>
+  <div id="radius-panel">
+    <label>
+      半径:
+      <input id="radius-input" type="number" value="3" min="0.001" step="0.001" max="999">
+    </label>
+  </div>
+  <canvas id="cad"></canvas>
+
+  <script>
+    const canvas = document.getElementById("cad");
+    const ctx = canvas.getContext("2d");
+    const angleInput = document.getElementById("angle-input");
+    const radiusInput = document.getElementById("radius-input");
+    const radiusPanel = document.getElementById("radius-panel");
+    let angleDeg = Number(angleInput.value) || 0;
+    const basePixelRadius = 240;
+    let logicalRadius = Number(radiusInput.value) || 3;
+    angleInput.addEventListener("input", () => {
+      angleDeg = Number(angleInput.value) || 0;
+      draw();
+    });
+    radiusInput.addEventListener("input", () => {
+      logicalRadius = Number(radiusInput.value) || 0;
+      draw();
+    });
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw();
+    }
+    window.addEventListener("resize", resize);
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#000";
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      // 円のピクセル半径は常に固定
+      const baseLogicalRadius = 3;
+      const radius = basePixelRadius;
+      // 入力角度は「垂直からの傾き」として扱い、
+      // 内部計算では (90° + 入力角度) を用いる
+      const angleRad = (90 + angleDeg) * Math.PI / 180;
+      const half = angleRad / 2;
+      const sinHalfRaw = Math.sin(half);
+      const sinHalf = Math.abs(sinHalfRaw) < 1e-6 ? (sinHalfRaw >= 0 ? 1e-6 : -1e-6) : sinHalfRaw;
+
+      const dimensionRadius = logicalRadius || 0;
+      // A = r * cot(θ/2) = r * cos(θ/2) / sin(θ/2)
+      const dimensionA = dimensionRadius * Math.cos(half) / sinHalf;
+      // B は従来通り: B = r * (1 + cos θ)
+      const dimensionB = dimensionRadius * (1 + Math.cos(angleRad));
+
+      const d = radius / sinHalf;
+      const cornerX = centerX - d * Math.cos(half);
+      const cornerY = centerY - d * Math.sin(half);
+      const tangentLength = Math.sqrt(Math.max(0, d * d - radius * radius));
+      const horizontalTangentX = cornerX + tangentLength;
+      const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
+      const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
+      if (radiusPanel) {
+        radiusPanel.style.left = `${centerX + 16}px`;
+        radiusPanel.style.top = `${(centerY + cornerY) / 2 - 10}px`;
+      }
+
+      // 円
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 垂直線（中心から水平線まで）
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX, cornerY);
+      ctx.stroke();
+
+      const extension = radius * 2;
+
+      // 右向きの線（接点からさらに延長）
+      ctx.beginPath();
+      ctx.moveTo(cornerX, cornerY);
+      ctx.lineTo(horizontalTangentX + extension, cornerY);
+      ctx.stroke();
+
+      // α度の線（接点からさらに延長）
+      ctx.beginPath();
+      ctx.moveTo(cornerX, cornerY);
+      ctx.lineTo(
+        cornerX + (tangentLength + extension) * Math.cos(angleRad),
+        cornerY + (tangentLength + extension) * Math.sin(angleRad)
+      );
+      ctx.stroke();
+
+      // 接点の座標（斜め線と円の接点）
+      const tangentX = cornerX + tangentLength * Math.cos(angleRad);
+      const tangentY = cornerY + tangentLength * Math.sin(angleRad);
+
+      // 円の一番下（中心直下の水平線）
+      const bottomY = centerY + radius;
+
+      const verticalPx = bottomY - tangentY;
+      const horizontalPx = centerX - tangentX;
+
+      const unitPerPixel = (logicalRadius && radius) ? (logicalRadius / radius) : 0;
+      const verticalValue = verticalPx * unitPerPixel;
+      const horizontalValue = horizontalPx * unitPerPixel;
+
+      // 寸法値を小数点以下 3 桁で表示
+      ctx.save();
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.textBaseline = "middle";
+
+      ctx.restore();
+
+      // A/B 寸法表示
+      ctx.save();
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.textBaseline = "middle";
+
+      // A: 上側水平線中央
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `A: ${dimensionA.toFixed(3)}`,
+        (cornerX + centerX) / 2,
+        cornerY - 20
+      );
+
+      // B: 角と接点の中間付近（左上寄り）
+      ctx.textAlign = "right";
+      ctx.fillText(
+        `B: ${dimensionB.toFixed(3)}`,
+        cornerX - 32,
+        (cornerY + tangentY) / 2 - 10
+      );
+
+      ctx.restore();
+    }
+
+    resize();
+  </script>
+</div>
+  <div id="calc2" class="tab-content">
+  <div id="angle2-panel" style="margin: 10px auto; text-align: center; width: fit-content;">
+    <label>θ（初期角度）: <input id="theta" type="number" min="0" max="90" value="20">°</label><br>
+    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0" oninput="updateAngle2()"> <span id="phiVal">0</span>°</label><br>
+    <div>見かけ角 α（度）: <span id="alpha">---</span></div>
+  </div>
+  <div id="tri-center">
+    <canvas id="triView" width="500" height="400"></canvas>
+  </div>
+</div>
+<div id="calc3" class="tab-content"></div>
+
+<script>
+document.querySelectorAll(".tab-button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+function updateAngle2() {
+  const theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+  const phiDeg = parseFloat(document.getElementById('phi').value);
+  const phi = phiDeg * Math.PI / 180;
+  const alpha = Math.atan(Math.tan(theta) * Math.cos(phi)) * 180 / Math.PI;
+
+  document.getElementById('phiVal').innerText = phiDeg;
+  document.getElementById('alpha').innerText = alpha.toFixed(3);
+
+  const canvas = document.getElementById('triView');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const base = 200;
+  const height = Math.tan(theta) * base;
+
+  // center of rotation
+  const cx = canvas.width / 2;
+  const cy = canvas.height * 0.70;
+
+  // Correct triangle orientation:
+  // p1 = bottom-right
+  // p2 = bottom-left
+  // p3 = top-left
+  const p1 = { x: cx + base / 2, y: cy };  // bottom-right
+  const p2 = { x: cx - base / 2, y: cy };  // bottom-left
+  const p3 = { x: cx - base / 2, y: cy - height }; // top-left
+
+  // rotate 90° left (counterclockwise)
+  function rot90(px, py) {
+    const dx = px - cx;
+    const dy = py - cy;
+    return { x: cx - dy, y: cy + dx };
+  }
+
+  const p1r = rot90(p1.x, p1.y);
+  const p2r = rot90(p2.x, p2.y);
+  const p3r = rot90(p3.x, p3.y);
+  [p1r, p2r, p3r].forEach(p => p.x = cx - (p.x - cx));
+
+  // 三角形描画
+  ctx.beginPath();
+  ctx.moveTo(p1r.x, p1r.y);
+  ctx.lineTo(p2r.x, p2r.y);
+  ctx.lineTo(p3r.x, p3r.y);
+  ctx.closePath();
+  ctx.fillStyle = '#c0d0ff';
+  ctx.strokeStyle = '#003';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+
+  // 奥行き側補助線
+  ctx.beginPath();
+  ctx.moveTo(p2r.x, p2r.y);
+  ctx.lineTo(p2r.x + depth*dx, p2r.y - depth*dy);
+  ctx.lineTo(p3r.x + depth*dx, p3r.y - depth*dy);
+  ctx.lineTo(p3r.x, p3r.y);
+  ctx.strokeStyle = '#99a';
+  ctx.stroke();
+}
+updateAngle2();
+</script>
+</body>
+</html>
