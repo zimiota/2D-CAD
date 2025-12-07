@@ -234,7 +234,7 @@
   <div id="calc2" class="tab-content">
   <div id="angle2-panel" style="margin: 10px auto; text-align: center; width: fit-content;">
     <label>θ（初期角度）: <input id="theta" type="number" min="0" max="90" value="20">°</label><br>
-    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0"> <span id="phiVal">0</span>°</label><br>
+    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0"> <span id="phiVal">0</span></label><br>
     <div>見かけ角 α（度）: <span id="alpha">---</span></div>
     <div style="font-size: 12px; margin-top: 6px; line-height: 1.5; text-align: left;">
       <div>・回転角度 φ は X 軸に対する回転指示角。</div>
@@ -264,6 +264,37 @@ const phiInput = document.getElementById('phi');
 thetaInput.addEventListener('input', updateAngle2);
 phiInput.addEventListener('input', updateAngle2);
 
+function formatDMS(deg, secondsDecimals = 1) {
+  const sign = deg < 0 ? '-' : '';
+  const absDeg = Math.abs(deg);
+  let d = Math.floor(absDeg);
+  let minFloat = (absDeg - d) * 60;
+  let m = Math.floor(minFloat);
+  let s = (minFloat - m) * 60;
+
+  const roundingFactor = 10 ** secondsDecimals;
+  s = Math.round(s * roundingFactor) / roundingFactor;
+  if (s >= 60) {
+    s -= 60;
+    m += 1;
+  }
+  if (m >= 60) {
+    m -= 60;
+    d += 1;
+  }
+
+  let sStr = s.toFixed(secondsDecimals);
+  if (secondsDecimals > 0) {
+    sStr = sStr.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+  }
+  const [sInt, sFrac] = sStr.split('.');
+  const secIntPadded = sInt.padStart(2, '0');
+  const secFormatted = sFrac ? `${secIntPadded}.${sFrac}` : secIntPadded;
+
+  const minFormatted = String(m).padStart(2, '0');
+  return `${sign}${d}°${minFormatted}′${secFormatted}″`;
+}
+
 function updateAngle2() {
   const thetaDeg = parseFloat(thetaInput.value) || 0;
   const theta = thetaDeg * Math.PI / 180;
@@ -273,8 +304,8 @@ function updateAngle2() {
 
   const displayedPhiDeg = 90 - phiDeg;
 
-  document.getElementById('phiVal').innerText = displayedPhiDeg;
-  document.getElementById('alpha').innerText = alpha.toFixed(3);
+  document.getElementById('phiVal').innerText = formatDMS(displayedPhiDeg);
+  document.getElementById('alpha').innerText = formatDMS(alpha);
 
   const canvas = document.getElementById('triView');
   const ctx = canvas.getContext('2d');
@@ -336,9 +367,9 @@ function updateAngle2() {
   ctx.fillStyle = '#003';
   ctx.font = '13px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`θ: ${thetaDeg.toFixed(1)}°`, 20, 24);
-  ctx.fillText(`φ: ${phiDeg.toFixed(1)}°`, 20, 42);
-  ctx.fillText(`α: ${alpha.toFixed(3)}°`, 20, 60);
+  ctx.fillText(`θ: ${formatDMS(thetaDeg)}`, 20, 24);
+  ctx.fillText(`φ: ${formatDMS(phiDeg)}`, 20, 42);
+  ctx.fillText(`α: ${formatDMS(alpha)}`, 20, 60);
 }
 updateAngle2();
 </script>
