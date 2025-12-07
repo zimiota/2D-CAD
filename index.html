@@ -222,6 +222,11 @@
     <label>θ（初期角度）: <input id="theta" type="number" min="0" max="90" value="20">°</label><br>
     <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0"> <span id="phiVal">0</span>°</label><br>
     <div>見かけ角 α（度）: <span id="alpha">---</span></div>
+    <div style="font-size: 12px; margin-top: 6px; line-height: 1.5; text-align: left;">
+      <div>・回転角度 φ は X 軸に対する回転指示角。</div>
+      <div>・直角三角形は垂直辺（右辺）を軸に回転。</div>
+      <div>・見かけ角 α は斜辺の傾き θ と φ の組み合わせで決まる正面からの角度。</div>
+    </div>
   </div>
   <div id="tri-center">
     <canvas id="triView" width="500" height="400"></canvas>
@@ -273,26 +278,22 @@ function updateAngle2() {
   const bottomLeft = { x: cx - bottom / 2, y: cy };  // 底辺左端（短辺側）
   const topRight = { x: bottomRight.x, y: cy - vertical }; // 垂直辺の上端
 
-  // 三角形の重心を中心に回転させる
-  const centroid = {
-    x: (bottomRight.x + bottomLeft.x + topRight.x) / 3,
-    y: (bottomRight.y + bottomLeft.y + topRight.y) / 3,
-  };
-
-  const rotatePoint = (point) => {
-    const dx = point.x - centroid.x;
-    const dy = point.y - centroid.y;
+  // 垂直辺（右辺）を回転軸として扱う
+  // 軸上の点（bottomRight, topRight）はそのままにし、左端のみ回転
+  const rotateAroundRightEdge = (point) => {
+    const dx = point.x - bottomRight.x;
+    const dy = point.y - bottomRight.y;
     const cos = Math.cos(phi);
     const sin = Math.sin(phi);
     return {
-      x: centroid.x + dx * cos - dy * sin,
-      y: centroid.y + dx * sin + dy * cos,
+      x: bottomRight.x + dx * cos - dy * sin,
+      y: bottomRight.y + dx * sin + dy * cos,
     };
   };
 
-  const rpBottomRight = rotatePoint(bottomRight);
-  const rpBottomLeft = rotatePoint(bottomLeft);
-  const rpTopRight = rotatePoint(topRight);
+  const rpBottomRight = bottomRight;
+  const rpTopRight = topRight;
+  const rpBottomLeft = rotateAroundRightEdge(bottomLeft);
 
   ctx.beginPath();
   ctx.moveTo(rpBottomRight.x, rpBottomRight.y);
@@ -304,6 +305,17 @@ function updateAngle2() {
   ctx.lineWidth = 2;
   ctx.fill();
   ctx.stroke();
+
+  // 回転軸である垂直辺を破線で示す
+  ctx.save();
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = '#666';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(rpBottomRight.x, rpBottomRight.y);
+  ctx.lineTo(rpTopRight.x, rpTopRight.y);
+  ctx.stroke();
+  ctx.restore();
 
   // θ・φ・α の簡易ラベルを表示
   ctx.fillStyle = '#003';
