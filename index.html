@@ -259,42 +259,59 @@ function updateAngle2() {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const base = 200;
-  const height = Math.tan(theta) * base;
+  // 直角は右下、垂直辺は右、斜辺は左になるように配置する
+  // θ は垂直辺と斜辺のなす角として扱う
+  const hypotenuse = 220;
+  const vertical = hypotenuse * Math.cos(theta);
+  const bottom = hypotenuse * Math.sin(theta);
 
   const cx = canvas.width / 2;
   const cy = canvas.height * 0.70;
 
-  const p2 = { x: cx - base / 2, y: cy };
-  const p1 = { x: cx + base / 2, y: cy };
-  const p3 = { x: p2.x, y: p2.y - height };
+  // 三角形の各頂点（回転前）
+  const bottomRight = { x: cx + bottom / 2, y: cy }; // 直角
+  const bottomLeft = { x: cx - bottom / 2, y: cy };  // 底辺左端（短辺側）
+  const topRight = { x: bottomRight.x, y: cy - vertical }; // 垂直辺の上端
 
-  const center = { x: cx, y: cy };
+  // 三角形の重心を中心に回転させる
+  const centroid = {
+    x: (bottomRight.x + bottomLeft.x + topRight.x) / 3,
+    y: (bottomRight.y + bottomLeft.y + topRight.y) / 3,
+  };
+
   const rotatePoint = (point) => {
-    const dx = point.x - center.x;
-    const dy = point.y - center.y;
+    const dx = point.x - centroid.x;
+    const dy = point.y - centroid.y;
     const cos = Math.cos(phi);
     const sin = Math.sin(phi);
     return {
-      x: center.x + dx * cos - dy * sin,
-      y: center.y + dx * sin + dy * cos,
+      x: centroid.x + dx * cos - dy * sin,
+      y: centroid.y + dx * sin + dy * cos,
     };
   };
 
-  const rp1 = rotatePoint(p1);
-  const rp2 = rotatePoint(p2);
-  const rp3 = rotatePoint(p3);
+  const rpBottomRight = rotatePoint(bottomRight);
+  const rpBottomLeft = rotatePoint(bottomLeft);
+  const rpTopRight = rotatePoint(topRight);
 
   ctx.beginPath();
-  ctx.moveTo(rp1.x, rp1.y);
-  ctx.lineTo(rp2.x, rp2.y);
-  ctx.lineTo(rp3.x, rp3.y);
+  ctx.moveTo(rpBottomRight.x, rpBottomRight.y);
+  ctx.lineTo(rpBottomLeft.x, rpBottomLeft.y);
+  ctx.lineTo(rpTopRight.x, rpTopRight.y);
   ctx.closePath();
   ctx.fillStyle = '#c0d0ff';
   ctx.strokeStyle = '#003';
   ctx.lineWidth = 2;
   ctx.fill();
   ctx.stroke();
+
+  // θ・φ・α の簡易ラベルを表示
+  ctx.fillStyle = '#003';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`θ: ${thetaDeg.toFixed(1)}°`, 20, 24);
+  ctx.fillText(`φ: ${phiDeg.toFixed(1)}°`, 20, 42);
+  ctx.fillText(`α: ${alpha.toFixed(3)}°`, 20, 60);
 }
 updateAngle2();
 </script>
