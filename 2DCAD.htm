@@ -265,7 +265,7 @@ function updateAngle2() {
   // p3 = top-left
   const p1 = { x: cx + base / 2, y: cy };  // bottom-right
   const p2 = { x: cx - base / 2, y: cy };  // bottom-left
-  const p3 = { x: cx - base / 2, y: cy - height }; // top-left
+  const p3 = { x: cx - base / 2, y: cy + height }; // top-left
 
   // rotate 90° left (counterclockwise)
   function rot90(px, py) {
@@ -285,7 +285,7 @@ function updateAngle2() {
   ctx.lineTo(p2r.x, p2r.y);
   ctx.lineTo(p3r.x, p3r.y);
   ctx.closePath();
-  ctx.fillStyle = '#FF0000';
+  ctx.fillStyle = '#c0d0ff';
   ctx.strokeStyle = '#003';
   ctx.lineWidth = 2;
   ctx.fill();
