@@ -260,20 +260,35 @@ function updateAngle2() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const base = 200;
-  const height = -Math.tan(theta) * base;
-  const adjustedHeight = height * Math.cos(phi);
+  const height = Math.tan(theta) * base;
 
   const cx = canvas.width / 2;
   const cy = canvas.height * 0.70;
 
-  const p1 = { x: cx - base / 2, y: cy };
-  const p2 = { x: cx + base / 2, y: cy };
-  const p3 = { x: cx, y: cy + adjustedHeight };
+  const p2 = { x: cx - base / 2, y: cy };
+  const p1 = { x: cx + base / 2, y: cy };
+  const p3 = { x: p2.x, y: p2.y - height };
+
+  const center = { x: cx, y: cy };
+  const rotatePoint = (point) => {
+    const dx = point.x - center.x;
+    const dy = point.y - center.y;
+    const cos = Math.cos(phi);
+    const sin = Math.sin(phi);
+    return {
+      x: center.x + dx * cos - dy * sin,
+      y: center.y + dx * sin + dy * cos,
+    };
+  };
+
+  const rp1 = rotatePoint(p1);
+  const rp2 = rotatePoint(p2);
+  const rp3 = rotatePoint(p3);
 
   ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.lineTo(p3.x, p3.y);
+  ctx.moveTo(rp1.x, rp1.y);
+  ctx.lineTo(rp2.x, rp2.y);
+  ctx.lineTo(rp3.x, rp3.y);
   ctx.closePath();
   ctx.fillStyle = '#c0d0ff';
   ctx.strokeStyle = '#003';
