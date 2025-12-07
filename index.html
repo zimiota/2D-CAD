@@ -239,6 +239,8 @@ document.querySelectorAll(".tab-button").forEach(btn => {
   });
 });
 
+document.getElementById('theta').addEventListener('input', updateAngle2);
+
 function updateAngle2() {
   const theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
   const phiDeg = parseFloat(document.getElementById('phi').value);
@@ -253,7 +255,7 @@ function updateAngle2() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const base = 200;
-  const height = Math.tan(theta) * base;
+  const height = -Math.tan(theta) * base;
 
   // center of rotation
   const cx = canvas.width / 2;
