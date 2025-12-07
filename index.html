@@ -280,14 +280,13 @@ function updateAngle2() {
 
   // 垂直辺（右辺）を回転軸として扱う
   // 軸上の点（bottomRight, topRight）はそのままにし、左端のみ回転
+  // ただし回転によって底辺の高さが変わらないよう、
+  // y 座標は固定しつつ x のみを縮小させる（奥行き方向の圧縮を想定）
   const rotateAroundRightEdge = (point) => {
     const dx = point.x - bottomRight.x;
-    const dy = point.y - bottomRight.y;
-    const cos = Math.cos(phi);
-    const sin = Math.sin(phi);
     return {
-      x: bottomRight.x + dx * cos - dy * sin,
-      y: bottomRight.y + dx * sin + dy * cos,
+      x: bottomRight.x + dx * Math.cos(phi),
+      y: point.y,
     };
   };
 
