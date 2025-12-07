@@ -257,7 +257,9 @@ function updateAngle2() {
   const phi = phiDeg * Math.PI / 180;
   const alpha = Math.atan(Math.tan(theta) * Math.cos(phi)) * 180 / Math.PI;
 
-  document.getElementById('phiVal').innerText = phiDeg;
+  const displayedPhiDeg = 90 - phiDeg;
+
+  document.getElementById('phiVal').innerText = displayedPhiDeg;
   document.getElementById('alpha').innerText = alpha.toFixed(3);
 
   const canvas = document.getElementById('triView');
