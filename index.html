@@ -220,7 +220,7 @@
   <div id="calc2" class="tab-content">
   <div id="angle2-panel" style="margin: 10px auto; text-align: center; width: fit-content;">
     <label>θ（初期角度）: <input id="theta" type="number" min="0" max="90" value="20">°</label><br>
-    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0" oninput="updateAngle2()"> <span id="phiVal">0</span>°</label><br>
+    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0"> <span id="phiVal">0</span>°</label><br>
     <div>見かけ角 α（度）: <span id="alpha">---</span></div>
   </div>
   <div id="tri-center">
@@ -239,11 +239,16 @@ document.querySelectorAll(".tab-button").forEach(btn => {
   });
 });
 
-document.getElementById('theta').addEventListener('input', updateAngle2);
+const thetaInput = document.getElementById('theta');
+const phiInput = document.getElementById('phi');
+
+thetaInput.addEventListener('input', updateAngle2);
+phiInput.addEventListener('input', updateAngle2);
 
 function updateAngle2() {
-  const theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
-  const phiDeg = parseFloat(document.getElementById('phi').value);
+  const thetaDeg = parseFloat(thetaInput.value) || 0;
+  const theta = thetaDeg * Math.PI / 180;
+  const phiDeg = parseFloat(phiInput.value) || 0;
   const phi = phiDeg * Math.PI / 180;
   const alpha = Math.atan(Math.tan(theta) * Math.cos(phi)) * 180 / Math.PI;
 
@@ -256,50 +261,24 @@ function updateAngle2() {
 
   const base = 200;
   const height = -Math.tan(theta) * base;
+  const adjustedHeight = height * Math.cos(phi);
 
-  // center of rotation
   const cx = canvas.width / 2;
   const cy = canvas.height * 0.70;
 
-  // Correct triangle orientation:
-  // p1 = bottom-right
-  // p2 = bottom-left
-  // p3 = top-left
-  const p1 = { x: cx + base / 2, y: cy };  // bottom-right
-  const p2 = { x: cx - base / 2, y: cy };  // bottom-left
-  const p3 = { x: cx - base / 2, y: cy + height }; // top-left
+  const p1 = { x: cx - base / 2, y: cy };
+  const p2 = { x: cx + base / 2, y: cy };
+  const p3 = { x: cx, y: cy + adjustedHeight };
 
-  // rotate 90° left (counterclockwise)
-  function rot90(px, py) {
-    const dx = px - cx;
-    const dy = py - cy;
-    return { x: cx - dy, y: cy + dx };
-  }
-
-  const p1r = rot90(p1.x, p1.y);
-  const p2r = rot90(p2.x, p2.y);
-  const p3r = rot90(p3.x, p3.y);
-  [p1r, p2r, p3r].forEach(p => p.x = cx - (p.x - cx));
-
-  // 三角形描画
   ctx.beginPath();
-  ctx.moveTo(p1r.x, p1r.y);
-  ctx.lineTo(p2r.x, p2r.y);
-  ctx.lineTo(p3r.x, p3r.y);
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.lineTo(p3.x, p3.y);
   ctx.closePath();
   ctx.fillStyle = '#c0d0ff';
   ctx.strokeStyle = '#003';
   ctx.lineWidth = 2;
   ctx.fill();
-  ctx.stroke();
-
-  // 奥行き側補助線
-  ctx.beginPath();
-  ctx.moveTo(p2r.x, p2r.y);
-  ctx.lineTo(p2r.x + depth*dx, p2r.y - depth*dy);
-  ctx.lineTo(p3r.x + depth*dx, p3r.y - depth*dy);
-  ctx.lineTo(p3r.x, p3r.y);
-  ctx.strokeStyle = '#99a';
   ctx.stroke();
 }
 updateAngle2();
