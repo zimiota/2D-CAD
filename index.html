@@ -602,160 +602,119 @@ function drawTab3Diagram(values) {
 
   const width = tab3Diagram.width;
   const height = tab3Diagram.height;
-  const radiusPx = 240;
-  const unitPerPixel = radiusVal / radiusPx;
+
+  const scaleLimit = Math.min(width, height) * 0.35 / radiusVal;
+  const scale = Math.min(1, scaleLimit);
+
+  const radiusPx = radiusVal * scale;
+  const aPx = aVal * scale;
+  const bPx = Number.isFinite(bVal) ? bVal * scale : 0;
+  const cPx = Number.isFinite(cVal) ? cVal * scale : 0;
+  const dPx = Number.isFinite(dVal) ? dVal * scale : 0;
+
+  const center = {
+    x: width * 0.56,
+    y: height * 0.5,
+  };
+
+  const verticalX = center.x;
+  const topY = center.y - radiusPx;
+  const bottomY = Math.max(center.y + Math.max(cPx, radiusPx * 0.25), topY + aPx + cPx + radiusPx * 0.25);
+
+  const pivot = { x: verticalX, y: topY + aPx };
+  const cEnd = { x: verticalX, y: pivot.y + cPx };
+  const dEnd = { x: cEnd.x + dPx, y: cEnd.y };
 
   const half = Math.atan(radiusVal / aVal);
   const angleRad = half * 2;
-  const sinHalf = Math.sin(half);
-  const cosHalf = Math.cos(half);
-
-  const dDistPx = radiusPx / sinHalf;
-  const tangentLength = Math.sqrt(Math.max(0, dDistPx * dDistPx - radiusPx * radiusPx));
-  const bisectorAngle = Math.PI / 4; // 45° 方向を基準に、2 本の接線を同じ角度で配置
-
-  const centerX = width * 0.45;
-  const centerY = height * 0.60;
-  const cornerX = centerX + dDistPx * Math.cos(bisectorAngle);
-  const cornerY = centerY + dDistPx * Math.sin(bisectorAngle);
-
-  const line1Angle = bisectorAngle + half;
-  const line2Angle = bisectorAngle - half;
-
-  const lineExtension = tangentLength + 120;
-  const line1End = {
-    x: cornerX + lineExtension * Math.cos(line1Angle),
-    y: cornerY + lineExtension * Math.sin(line1Angle),
+  const thetaDeg = angleRad * 180 / Math.PI;
+  const radiusDir = {
+    x: Math.sin(angleRad),
+    y: Math.cos(angleRad),
   };
-  const line2End = {
-    x: cornerX + lineExtension * Math.cos(line2Angle),
-    y: cornerY + lineExtension * Math.sin(line2Angle),
+  const tangentPoint = {
+    x: center.x + radiusDir.x * radiusPx,
+    y: center.y + radiusDir.y * radiusPx,
   };
 
-  const tangent1 = {
-    x: cornerX + tangentLength * Math.cos(line1Angle),
-    y: cornerY + tangentLength * Math.sin(line1Angle),
-  };
-  const tangent2 = {
-    x: cornerX + tangentLength * Math.cos(line2Angle),
-    y: cornerY + tangentLength * Math.sin(line2Angle),
-  };
-
-  // 円
-  tab3Ctx.beginPath();
-  tab3Ctx.arc(centerX, centerY, radiusPx, 0, Math.PI * 2);
-  tab3Ctx.strokeStyle = '#111';
-  tab3Ctx.lineWidth = 3;
-  tab3Ctx.stroke();
-
-  // 半径線（中心→接点方向）
-  const bisectorUnit = {
-    x: (cornerX - centerX) / dDistPx,
-    y: (cornerY - centerY) / dDistPx,
-  };
-  const circleOnBisector = {
-    x: centerX + bisectorUnit.x * radiusPx,
-    y: centerY + bisectorUnit.y * radiusPx,
-  };
-  tab3Ctx.beginPath();
-  tab3Ctx.moveTo(centerX, centerY);
-  tab3Ctx.lineTo(circleOnBisector.x, circleOnBisector.y);
-  tab3Ctx.strokeStyle = '#1f73ff';
-  tab3Ctx.lineWidth = 2.5;
-  tab3Ctx.stroke();
-
-  // 接線 2 本（同じ角度）
-  tab3Ctx.beginPath();
-  tab3Ctx.moveTo(cornerX, cornerY);
-  tab3Ctx.lineTo(line1End.x, line1End.y);
-  tab3Ctx.moveTo(cornerX, cornerY);
-  tab3Ctx.lineTo(line2End.x, line2End.y);
-  tab3Ctx.strokeStyle = '#225';
-  tab3Ctx.lineWidth = 4;
-  tab3Ctx.stroke();
-
-  // 半径の延長線（角 bisector）
   tab3Ctx.save();
-  tab3Ctx.setLineDash([10, 8]);
+  tab3Ctx.lineWidth = 3;
+  tab3Ctx.strokeStyle = '#111';
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(centerX, centerY);
-  tab3Ctx.lineTo(cornerX, cornerY);
-  tab3Ctx.strokeStyle = '#888';
-  tab3Ctx.lineWidth = 2;
+  tab3Ctx.arc(center.x, center.y, radiusPx, 0, Math.PI * 2);
   tab3Ctx.stroke();
   tab3Ctx.restore();
 
-  // A を bisector 上に描画
-  const aLengthPx = aVal / unitPerPixel;
-  const aStart = circleOnBisector;
-  const aEnd = {
-    x: aStart.x + bisectorUnit.x * aLengthPx,
-    y: aStart.y + bisectorUnit.y * aLengthPx,
-  };
+  tab3Ctx.save();
+  tab3Ctx.strokeStyle = '#333';
+  tab3Ctx.lineWidth = 3;
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(aStart.x, aStart.y);
-  tab3Ctx.lineTo(aEnd.x, aEnd.y);
-  tab3Ctx.strokeStyle = '#d94fd4';
-  tab3Ctx.lineWidth = 6;
+  tab3Ctx.moveTo(verticalX, topY);
+  tab3Ctx.lineTo(verticalX, bottomY);
   tab3Ctx.stroke();
+  tab3Ctx.restore();
 
-  // C を示す垂線（角→円の接点方向）
-  const cLengthPx = Number.isFinite(cVal) ? cVal / unitPerPixel : 0;
-  const cDir = {
-    x: Math.cos(line2Angle + Math.PI / 2),
-    y: Math.sin(line2Angle + Math.PI / 2),
-  };
-  const cStart = tangent2;
-  const cEnd = {
-    x: cStart.x + cDir.x * cLengthPx,
-    y: cStart.y + cDir.y * cLengthPx,
-  };
+  tab3Ctx.save();
+  tab3Ctx.strokeStyle = '#1f73ff';
+  tab3Ctx.lineWidth = 3.5;
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(cStart.x, cStart.y);
-  tab3Ctx.lineTo(cEnd.x, cEnd.y);
+  tab3Ctx.moveTo(pivot.x, pivot.y);
+  tab3Ctx.lineTo(tangentPoint.x, tangentPoint.y);
+  tab3Ctx.stroke();
+  tab3Ctx.restore();
+
+  tab3Ctx.save();
   tab3Ctx.strokeStyle = '#ff7f11';
-  tab3Ctx.lineWidth = 4;
-  tab3Ctx.stroke();
-
-  // D を示す水平線（角を基準に）
-  const dLengthPx = Number.isFinite(dVal) ? dVal / unitPerPixel : 0;
-  const dStart = { x: cornerX, y: cornerY };
-  const dEnd = { x: dStart.x + dLengthPx, y: dStart.y };
+  tab3Ctx.lineWidth = 3;
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(dStart.x, dStart.y);
-  tab3Ctx.lineTo(dEnd.x, dEnd.y);
+  tab3Ctx.moveTo(pivot.x, pivot.y);
+  tab3Ctx.lineTo(cEnd.x, cEnd.y);
+  tab3Ctx.stroke();
+  tab3Ctx.restore();
+
+  tab3Ctx.save();
   tab3Ctx.strokeStyle = '#11a861';
-  tab3Ctx.lineWidth = 4;
-  tab3Ctx.stroke();
-
-  // B を示す短いマーカー（接点近く）
-  const bLengthPx = Number.isFinite(bVal) ? bVal / unitPerPixel : 0;
-  const bMarkerDir = { x: Math.cos(line1Angle), y: Math.sin(line1Angle) };
-  const bStart = {
-    x: tangent1.x - bMarkerDir.x * (bLengthPx * 0.15),
-    y: tangent1.y - bMarkerDir.y * (bLengthPx * 0.15),
-  };
-  const bEnd = {
-    x: bStart.x + bMarkerDir.x * (bLengthPx * 0.30),
-    y: bStart.y + bMarkerDir.y * (bLengthPx * 0.30),
-  };
+  tab3Ctx.lineWidth = 3;
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(bStart.x, bStart.y);
-  tab3Ctx.lineTo(bEnd.x, bEnd.y);
-  tab3Ctx.strokeStyle = '#1b82f1';
-  tab3Ctx.lineWidth = 6;
+  tab3Ctx.moveTo(cEnd.x, cEnd.y);
+  tab3Ctx.lineTo(dEnd.x, dEnd.y);
   tab3Ctx.stroke();
+  tab3Ctx.restore();
 
-  // ラベル
+  tab3Ctx.save();
+  tab3Ctx.strokeStyle = '#2c5dda';
+  tab3Ctx.lineWidth = 4;
+  tab3Ctx.beginPath();
+  tab3Ctx.moveTo(center.x, center.y);
+  tab3Ctx.lineTo(center.x, center.y - bPx);
+  tab3Ctx.stroke();
+  tab3Ctx.restore();
+
+  tab3Ctx.save();
+  tab3Ctx.strokeStyle = '#c04ad9';
+  tab3Ctx.lineWidth = 4;
+  tab3Ctx.beginPath();
+  tab3Ctx.moveTo(verticalX, topY);
+  tab3Ctx.lineTo(pivot.x, pivot.y);
+  tab3Ctx.stroke();
+  tab3Ctx.restore();
+
+  tab3Ctx.save();
   tab3Ctx.fillStyle = '#222';
-  tab3Ctx.font = '28px sans-serif';
+  tab3Ctx.font = '26px sans-serif';
   tab3Ctx.textAlign = 'left';
-  tab3Ctx.fillText(`角度 θ: ${(angleRad * 180 / Math.PI).toFixed(2)}°`, 40, 50);
-  tab3Ctx.fillText(`半径 r: ${radiusVal.toFixed(3)}`, 40, 90);
-  tab3Ctx.fillText(`A: ${format3(aVal)}`, aEnd.x + 10, aEnd.y - 10);
-  tab3Ctx.fillText(`B: ${format3(bVal)}`, bEnd.x + 10, bEnd.y);
-  tab3Ctx.fillText(`C: ${format3(cVal)}`, cEnd.x + 10, cEnd.y);
-  tab3Ctx.fillText(`D: ${format3(dVal)}`, dEnd.x + 10, dEnd.y + 6);
+  tab3Ctx.fillText(`角度 θ: ${thetaDeg.toFixed(2)}°`, 28, 44);
+  tab3Ctx.fillText(`半径 r: ${radiusVal.toFixed(3)}`, 28, 76);
+
+  tab3Ctx.fillText(`A: ${format3(aVal)}`, pivot.x + 12, (topY + pivot.y) / 2);
+  tab3Ctx.fillText(`B: ${format3(bVal)}`, center.x + 12, center.y - bPx / 2);
+  tab3Ctx.fillText(`C: ${format3(cVal)}`, pivot.x + 12, pivot.y + cPx / 2);
+  tab3Ctx.fillText(`D: ${format3(dVal)}`, dEnd.x + 12, dEnd.y + 4);
+
+  const thetaLabelX = (pivot.x + tangentPoint.x) / 2;
+  const thetaLabelY = (pivot.y + tangentPoint.y) / 2 - 6;
+  tab3Ctx.fillText('θ', thetaLabelX, thetaLabelY);
+  tab3Ctx.restore();
 }
 </script>
 </body>
