@@ -15,7 +15,7 @@
       transform: translateX(-50%);
       z-index: 1;
       background: #ffffff;
-      padding: 6px 12px;
+      padding: 10px 16px;
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
       white-space: nowrap;
@@ -25,10 +25,14 @@
       z-index: 1;
       background: rgba(255, 255, 255, 0.85);
       border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 12px;
+      padding: 8px 14px;
+      font-size: 48px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
       white-space: nowrap;
+    }
+    #radius-panel input {
+      font-size: 48px;
+      padding: 12px 18px;
     }
     .box {
       margin-bottom: 10px;
@@ -38,6 +42,24 @@
 .tab-button.active { background:#fff; border-bottom:2px solid #000; }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
+
+    #calc1 {
+      font-size: 48px;
+    }
+    #angle-panel label {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 48px;
+    }
+    #angle-panel input[type="number"] {
+      font-size: 48px;
+      padding: 12px 18px;
+    }
+    #angle-panel input[type="range"] {
+      width: 360px;
+      accent-color: #1f73ff;
+    }
 
 #tri-center {
   width:100%;
@@ -82,7 +104,8 @@
   <div id="angle-panel">
     <label>
       角度（度数）:
-      <input id="angle-input" type="number" value="0" min="1" max="179">
+      <input id="angle-input" type="number" value="0" min="0" max="179">
+      <input id="angle-slider" type="range" value="0" min="0" max="179">
     </label>
   </div>
   <div id="radius-panel">
@@ -97,15 +120,20 @@
     const canvas = document.getElementById("cad");
     const ctx = canvas.getContext("2d");
     const angleInput = document.getElementById("angle-input");
+    const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
     const radiusPanel = document.getElementById("radius-panel");
     let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
     let logicalRadius = Number(radiusInput.value) || 3;
-    angleInput.addEventListener("input", () => {
-      angleDeg = Number(angleInput.value) || 0;
+    const setAngle = (value) => {
+      angleDeg = Number(value) || 0;
+      angleInput.value = angleDeg;
+      angleSlider.value = angleDeg;
       draw();
-    });
+    };
+    angleInput.addEventListener("input", () => setAngle(angleInput.value));
+    angleSlider.addEventListener("input", () => setAngle(angleSlider.value));
     radiusInput.addEventListener("input", () => {
       logicalRadius = Number(radiusInput.value) || 0;
       draw();
@@ -197,7 +225,7 @@
 
       // 寸法値を小数点以下 3 桁で表示
       ctx.save();
-      ctx.font = "12px sans-serif";
+      ctx.font = "36px sans-serif";
       ctx.fillStyle = "#333";
       ctx.textBaseline = "middle";
 
@@ -205,7 +233,7 @@
 
       // A/B 寸法表示
       ctx.save();
-      ctx.font = "12px sans-serif";
+      ctx.font = "36px sans-serif";
       ctx.fillStyle = "#333";
       ctx.textBaseline = "middle";
 
