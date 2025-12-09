@@ -111,7 +111,7 @@
   <div id="radius-panel">
     <label>
       半径:
-      <input id="radius-input" type="number" value="3" min="0" step="1" max="999">
+      <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
     </label>
   </div>
   <canvas id="cad"></canvas>
@@ -137,8 +137,10 @@
     angleSlider.addEventListener("input", () => setAngle(angleSlider.value));
     radiusInput.addEventListener("input", () => {
       const radiusValue = Number(radiusInput.value);
-      const roundedRadius = Number.isFinite(radiusValue) ? Math.round(radiusValue) : 0;
-      radiusInput.value = roundedRadius;
+      const roundedRadius = Number.isFinite(radiusValue)
+        ? Math.round(radiusValue * 10) / 10
+        : 0;
+      radiusInput.value = roundedRadius.toFixed(1);
       logicalRadius = roundedRadius;
       draw();
     });
