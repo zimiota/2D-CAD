@@ -367,7 +367,7 @@
       </div>
     </div>
     <div style="margin-top: 10px; font-size: 22px; color: #445;">
-      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると右上へ傾きます。
+      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると左上へ傾きます。
     </div>
     <div id="tab3-diagram-wrapper" style="margin-top: 24px; text-align: center;">
       <canvas id="tab3-diagram" width="1100" height="760" style="max-width: 100%; border: 1px solid #ccc; background: #fafafa;"></canvas>
@@ -627,7 +627,7 @@ function drawTab3Diagram(values) {
   const tangentCanvas = toCanvas(tangent.x, tangent.y);
   const bottomCanvas = toCanvas(tangent.x, -radiusVal);
 
-  const dir = { x: Math.sin(thetaRad), y: Math.cos(thetaRad) };
+  const dir = { x: -Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = {
     x: tangentCanvas.x - dir.x * lineLength,
