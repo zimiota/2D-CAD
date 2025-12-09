@@ -627,7 +627,7 @@ function drawTab3Diagram(values) {
   const tangentCanvas = toCanvas(tangent.x, tangent.y);
   const bottomCanvas = toCanvas(tangent.x, -radiusVal);
 
-  const dir = { x: -Math.sin(thetaRad), y: Math.cos(thetaRad) };
+  const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = tangentCanvas;
   const lineEnd = {
