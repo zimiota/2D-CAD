@@ -43,6 +43,66 @@
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 
+.tab-section {
+  max-width: 980px;
+  margin: 20px auto;
+  padding: 18px 22px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-size: 32px;
+  line-height: 1.4;
+}
+
+.tab-section h2 {
+  margin: 0 0 12px;
+  font-size: 36px;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 180px 220px 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.input-row input[type="number"] {
+  font-size: 32px;
+  padding: 8px 12px;
+}
+
+.input-row input[type="range"] {
+  width: 100%;
+  accent-color: #1f73ff;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.result-card {
+  padding: 12px 16px;
+  background: #f8f9fb;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.result-card .label {
+  font-weight: bold;
+  color: #1f2d3d;
+}
+
+.result-card .value {
+  font-size: 38px;
+  display: block;
+  margin-top: 6px;
+  letter-spacing: 0.02em;
+}
+
     #calc1 {
       font-size: 48px;
     }
@@ -283,7 +343,38 @@
     <canvas id="triView" width="500" height="400"></canvas>
   </div>
 </div>
-<div id="calc3" class="tab-content"></div>
+<div id="calc3" class="tab-content">
+  <div class="tab-section">
+    <h2>円の半径と A から B・C・D を計算</h2>
+    <div class="input-row">
+      <div>半径 (r):</div>
+      <input id="tab3-radius-input" type="number" value="3.000" min="0.001" step="0.001">
+      <input id="tab3-radius-slider" type="range" min="0.001" max="100" step="0.001" value="3.000">
+    </div>
+    <div class="input-row">
+      <div>A 値:</div>
+      <input id="tab3-a-input" type="number" value="3.000" min="0.001" step="0.001">
+      <input id="tab3-a-slider" type="range" min="0.001" max="100" step="0.001" value="3.000">
+    </div>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="label">B</div>
+        <span class="value" id="tab3-b">---</span>
+      </div>
+      <div class="result-card">
+        <div class="label">C</div>
+        <span class="value" id="tab3-c">---</span>
+      </div>
+      <div class="result-card">
+        <div class="label">D</div>
+        <span class="value" id="tab3-d">---</span>
+      </div>
+    </div>
+    <div style="margin-top: 10px; font-size: 22px; color: #445;">
+      入力と出力はすべて小数点以下 3 位に丸めて表示します。
+    </div>
+  </div>
+</div>
 
 <script>
 document.querySelectorAll(".tab-button").forEach(btn => {
@@ -409,6 +500,86 @@ function updateAngle2() {
   ctx.fillText(`α: ${formatDMS(alpha)}`, 20, 60);
 }
 updateAngle2();
+
+// ==== Tab3: 半径と A から B/C/D を計算 ====
+const tab3RadiusInput = document.getElementById('tab3-radius-input');
+const tab3RadiusSlider = document.getElementById('tab3-radius-slider');
+const tab3AInput = document.getElementById('tab3-a-input');
+const tab3ASlider = document.getElementById('tab3-a-slider');
+const tab3B = document.getElementById('tab3-b');
+const tab3C = document.getElementById('tab3-c');
+const tab3D = document.getElementById('tab3-d');
+
+const format3 = (value) => Number.isFinite(value) ? value.toFixed(3) : '---';
+
+function computeBCD(radius, aValue) {
+  if (!Number.isFinite(radius) || !Number.isFinite(aValue) || radius <= 0 || aValue <= 0) {
+    return { b: NaN, c: NaN, d: NaN };
+  }
+
+  const half = Math.atan(radius / aValue);
+  const sinHalf = Math.sin(half);
+  if (Math.abs(sinHalf) < 1e-9) {
+    return { b: NaN, c: NaN, d: NaN };
+  }
+
+  const angleRad = half * 2;
+  const cosHalf = Math.cos(half);
+  const cosAngle = Math.cos(angleRad);
+  const sinAngle = Math.sin(angleRad);
+
+  const b = radius * (1 + cosAngle);
+
+  const dDist = radius / sinHalf;
+  const tangentLength = Math.sqrt(Math.max(0, dDist * dDist - radius * radius));
+
+  const c = radius + dDist * sinHalf - tangentLength * sinAngle;
+  const d = dDist * cosHalf - tangentLength * cosAngle;
+
+  return { b, c, d };
+}
+
+function updateTab3Outputs() {
+  const radiusVal = Number(tab3RadiusInput.value);
+  const aVal = Number(tab3AInput.value);
+  tab3RadiusInput.value = Number.isFinite(radiusVal) ? radiusVal.toFixed(3) : '';
+  tab3AInput.value = Number.isFinite(aVal) ? aVal.toFixed(3) : '';
+
+  if (Number.isFinite(radiusVal)) {
+    tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
+    tab3RadiusSlider.value = radiusVal;
+  }
+
+  if (Number.isFinite(aVal)) {
+    tab3ASlider.max = Math.max(Number(tab3ASlider.max), aVal);
+    tab3ASlider.value = aVal;
+  }
+
+  const { b, c, d } = computeBCD(radiusVal, aVal);
+  tab3B.textContent = format3(b);
+  tab3C.textContent = format3(c);
+  tab3D.textContent = format3(d);
+}
+
+const bindSync = (inputEl, sliderEl) => {
+  inputEl.addEventListener('input', () => {
+    const val = Number(inputEl.value);
+    if (Number.isFinite(val)) {
+      sliderEl.value = val;
+    }
+    updateTab3Outputs();
+  });
+
+  sliderEl.addEventListener('input', () => {
+    const val = Number(sliderEl.value);
+    inputEl.value = val.toFixed(3);
+    updateTab3Outputs();
+  });
+};
+
+bindSync(tab3RadiusInput, tab3RadiusSlider);
+bindSync(tab3AInput, tab3ASlider);
+updateTab3Outputs();
 </script>
 </body>
 </html>
