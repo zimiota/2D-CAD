@@ -126,6 +126,7 @@
     let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
     let logicalRadius = Number(radiusInput.value) || 3;
+    let bLabelFixedX = null;
     const setAngle = (value) => {
       angleDeg = Number(value) || 0;
       angleInput.value = angleDeg;
@@ -247,9 +248,12 @@
 
       // B: 角と接点の中間付近（左上寄り）
       ctx.textAlign = "right";
+      if (bLabelFixedX === null) {
+        bLabelFixedX = cornerX - 32;
+      }
       ctx.fillText(
         `B: ${dimensionB.toFixed(3)}`,
-        cornerX - 32,
+        bLabelFixedX,
         (cornerY + tangentY) / 2 - 10
       );
 
