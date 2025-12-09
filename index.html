@@ -686,6 +686,28 @@ function drawTab3Diagram(values) {
     y: height * 0.52,
   };
 
+  tab3Ctx.save();
+  tab3Ctx.strokeStyle = '#c4ccd8';
+  tab3Ctx.setLineDash([10, 10]);
+  tab3Ctx.lineWidth = 2.5;
+  tab3Ctx.beginPath();
+  tab3Ctx.moveTo(center.x, 18);
+  tab3Ctx.lineTo(center.x, height - 18);
+  tab3Ctx.moveTo(22, center.y);
+  tab3Ctx.lineTo(width - 22, center.y);
+  tab3Ctx.stroke();
+  tab3Ctx.restore();
+
+  tab3Ctx.save();
+  tab3Ctx.fillStyle = '#1f2d3d';
+  tab3Ctx.beginPath();
+  tab3Ctx.arc(center.x, center.y, 7, 0, Math.PI * 2);
+  tab3Ctx.fill();
+  tab3Ctx.font = '22px sans-serif';
+  tab3Ctx.textAlign = 'left';
+  tab3Ctx.fillText('原点（円の中心）', center.x + 12, center.y - 10);
+  tab3Ctx.restore();
+
   const verticalX = center.x - radiusPx * 0.28;
   const topY = center.y - radiusPx;
   const bottomY = Math.max(center.y + radiusPx * 0.65, topY + aPx + cPx + radiusPx * 0.15);
@@ -812,6 +834,26 @@ function drawTab3Diagram(values) {
   const thetaLabelX = (pivot.x + tangentPoint.x) / 2;
   const thetaLabelY = (pivot.y + tangentPoint.y) / 2 - 8;
   tab3Ctx.fillText('θ', thetaLabelX, thetaLabelY);
+
+  const toUnits = (pxDelta) => pxDelta * unitPerPixel;
+  const formatSigned = (val) => `${val >= 0 ? '+' : ''}${format3(val)}`;
+  const relativePoints = [
+    { label: '接点', point: tangentPoint },
+    { label: 'A 始点', point: pivot },
+    { label: 'C 終点', point: cEnd },
+    { label: 'D 終点', point: dEnd },
+  ];
+
+  tab3Ctx.font = '22px sans-serif';
+  tab3Ctx.fillStyle = '#1f2d3d';
+  tab3Ctx.textAlign = 'left';
+  tab3Ctx.fillText('中心原点からの座標値（+X: 右 / +Y: 下）', 28, height - 92);
+  relativePoints.forEach((item, idx) => {
+    const dx = toUnits(item.point.x - center.x);
+    const dy = toUnits(item.point.y - center.y);
+    const lineY = height - 64 + idx * 24;
+    tab3Ctx.fillText(`${item.label}: x ${formatSigned(dx)}, y ${formatSigned(dy)}`, 28, lineY);
+  });
   tab3Ctx.restore();
 }
 </script>
