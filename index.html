@@ -8,34 +8,31 @@
   <style>
     body { margin: 0; overflow: hidden; font-family: sans-serif; }
     canvas { background: #f0f0f0; display: block; }
-    #control-panel {
+    #angle-panel {
       position: absolute;
-      top: 16px;
+      top: 48px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 2;
-      background: rgba(255, 255, 255, 0.92);
-      padding: 16px 20px;
-      border-radius: 12px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
-      min-width: 880px;
+      z-index: 1;
+      background: #ffffff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+      white-space: nowrap;
     }
-    #control-panel .input-row {
-      grid-template-columns: 150px 200px 420px;
-      margin-bottom: 10px;
-      font-size: 26px;
+    #radius-panel {
+      position: absolute;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 48px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      white-space: nowrap;
     }
-    #control-panel .input-row input[type="number"] {
-      font-size: 26px;
-    }
-    #control-panel .input-row input[type="range"] {
-      accent-color: #1f73ff;
-    }
-    #control-panel .result-grid {
-      margin-top: 10px;
-    }
-    #control-panel .result-card .value {
-      font-size: 32px;
+    #radius-panel input {
+      font-size: 48px;
+      padding: 12px 18px;
     }
     .box {
       margin-bottom: 10px;
@@ -106,6 +103,24 @@
   letter-spacing: 0.02em;
 }
 
+    #calc1 {
+      font-size: 48px;
+    }
+    #angle-panel label {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 48px;
+    }
+    #angle-panel input[type="number"] {
+      font-size: 48px;
+      padding: 12px 18px;
+    }
+    #angle-panel input[type="range"] {
+      width: 360px;
+      accent-color: #1f73ff;
+    }
+
 #tri-center {
   width:100%;
   display:flex;
@@ -146,205 +161,49 @@
   <button class="tab-button" data-tab="calc3">TAB3</button>
 </div>
 <div id="calc1" class="tab-content active">
-  <div id="control-panel">
-    <div class="input-row">
-      <div>半径 (r):</div>
-      <input id="radius-input" type="number" value="3.000" min="0.001" step="0.001" max="999">
-      <input id="radius-slider" type="range" value="3.000" min="0.001" max="100" step="0.001">
-    </div>
-    <div class="input-row">
-      <div>角度 θ (度):</div>
-      <input id="theta-input" type="number" value="90.000" min="0" max="179" step="0.001">
-      <input id="theta-slider" type="range" value="90.000" min="0" max="179" step="0.001">
-    </div>
-    <div class="input-row">
-      <div>A 値:</div>
-      <input id="a-input" type="number" value="3.000" min="0.001" step="0.001">
-      <input id="a-slider" type="range" value="3.000" min="0.001" max="100" step="0.001">
-    </div>
-    <div class="result-grid">
-      <div class="result-card">
-        <div class="label">A</div>
-        <span class="value" id="calc1-a-value">---</span>
-      </div>
-      <div class="result-card">
-        <div class="label">B</div>
-        <span class="value" id="calc1-b-value">---</span>
-      </div>
-      <div class="result-card">
-        <div class="label">C</div>
-        <span class="value" id="calc1-c-value">---</span>
-      </div>
-      <div class="result-card">
-        <div class="label">D</div>
-        <span class="value" id="calc1-d-value">---</span>
-      </div>
-      <div class="result-card">
-        <div class="label">θ (度)</div>
-        <span class="value" id="calc1-theta-value">---</span>
-      </div>
-    </div>
+  <div id="angle-panel">
+    <label>
+      角度（度数）:
+      <input id="angle-input" type="number" value="0" min="0" max="179">
+      <input id="angle-slider" type="range" value="0" min="0" max="179">
+    </label>
+  </div>
+  <div id="radius-panel">
+    <label>
+      半径:
+      <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
+    </label>
   </div>
   <canvas id="cad"></canvas>
 
   <script>
     const canvas = document.getElementById("cad");
     const ctx = canvas.getContext("2d");
+    const angleInput = document.getElementById("angle-input");
+    const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
-    const radiusSlider = document.getElementById("radius-slider");
-    const thetaInput = document.getElementById("theta-input");
-    const thetaSlider = document.getElementById("theta-slider");
-    const aInput = document.getElementById("a-input");
-    const aSlider = document.getElementById("a-slider");
-    const calc1AValue = document.getElementById("calc1-a-value");
-    const calc1BValue = document.getElementById("calc1-b-value");
-    const calc1CValue = document.getElementById("calc1-c-value");
-    const calc1DValue = document.getElementById("calc1-d-value");
-    const calc1ThetaValue = document.getElementById("calc1-theta-value");
+    const radiusPanel = document.getElementById("radius-panel");
+    let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
+    let logicalRadius = Number(radiusInput.value) || 3;
     let bLabelFixedX = null;
-
-    const state = {
-      r: Number(radiusInput.value) || 3,
-      thetaDeg: Number(thetaInput.value) || 90,
-      A: Number(aInput.value) || 3,
-      B: 0,
-      C: 0,
-      D: 0,
-    };
-
-    const clampTheta = (theta) => Math.min(179, Math.max(0, theta));
-
-    const computeDimensions = (radius, thetaDeg) => {
-      const thetaRad = (thetaDeg || 0) * Math.PI / 180;
-      const half = thetaRad / 2;
-      const sinHalfRaw = Math.sin(half);
-      const sinHalf = Math.abs(sinHalfRaw) < 1e-6 ? (sinHalfRaw >= 0 ? 1e-6 : -1e-6) : sinHalfRaw;
-      const cosHalf = Math.cos(half);
-      const cosTheta = Math.cos(thetaRad);
-      const sinTheta = Math.sin(thetaRad);
-
-      const A = radius * cosHalf / sinHalf;
-      const B = radius * (1 + cosTheta);
-
-      const dDist = radius / sinHalf;
-      const tangentLength = Math.sqrt(Math.max(0, dDist * dDist - radius * radius));
-      const C = radius + dDist * sinHalf - tangentLength * sinTheta;
-      const D = dDist * cosHalf - tangentLength * cosTheta;
-
-      return { A, B, C, D };
-    };
-
-    const solveThetaFromA = (radius, targetA, maxIter = 80, epsilon = 1e-6) => {
-      if (!Number.isFinite(radius) || radius <= 0 || !Number.isFinite(targetA) || targetA <= 0) {
-        return NaN;
-      }
-
-      let low = 0;
-      let high = 179;
-      let bestTheta = clampTheta(state.thetaDeg);
-      let bestDiff = Infinity;
-
-      for (let i = 0; i < maxIter; i++) {
-        const mid = (low + high) / 2;
-        const { A } = computeDimensions(radius, mid);
-        const diff = Math.abs(A - targetA);
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          bestTheta = mid;
-        }
-        if (diff < epsilon) {
-          break;
-        }
-        if (A > targetA) {
-          low = mid;
-        } else {
-          high = mid;
-        }
-      }
-
-      return bestTheta;
-    };
-
-    const updateStateFromTheta = () => {
-      const derived = computeDimensions(state.r, state.thetaDeg);
-      state.A = derived.A;
-      state.B = derived.B;
-      state.C = derived.C;
-      state.D = derived.D;
-    };
-
-    const formatValue = (value) => Number.isFinite(value) ? value.toFixed(3) : "---";
-
-    const syncUIWithState = () => {
-      const limitedTheta = clampTheta(state.thetaDeg);
-      state.thetaDeg = limitedTheta;
-
-      radiusInput.value = Number.isFinite(state.r) ? state.r.toFixed(3) : "";
-      radiusSlider.value = state.r;
-      radiusSlider.max = Math.max(Number(radiusSlider.max), state.r);
-
-      thetaInput.value = Number.isFinite(state.thetaDeg) ? state.thetaDeg.toFixed(3) : "";
-      thetaSlider.value = state.thetaDeg;
-
-      aInput.value = Number.isFinite(state.A) ? state.A.toFixed(3) : "";
-      aSlider.value = state.A;
-      aSlider.max = Math.max(Number(aSlider.max), state.A);
-
-      calc1AValue.textContent = formatValue(state.A);
-      calc1BValue.textContent = formatValue(state.B);
-      calc1CValue.textContent = formatValue(state.C);
-      calc1DValue.textContent = formatValue(state.D);
-      calc1ThetaValue.textContent = Number.isFinite(state.thetaDeg) ? state.thetaDeg.toFixed(3) : "---";
-    };
-
-    const recomputeAndRender = () => {
-      updateStateFromTheta();
-      syncUIWithState();
+    const setAngle = (value) => {
+      angleDeg = Number(value) || 0;
+      angleInput.value = angleDeg;
+      angleSlider.value = angleDeg;
       draw();
     };
-
-    const handleRadiusChange = (value) => {
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed) || parsed <= 0) {
-        return;
-      }
-      state.r = parsed;
-      recomputeAndRender();
-    };
-
-    const handleThetaChange = (value) => {
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed)) {
-        return;
-      }
-      state.thetaDeg = clampTheta(parsed);
-      recomputeAndRender();
-    };
-
-    const handleAChange = (value) => {
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed) || parsed <= 0) {
-        return;
-      }
-      const solvedTheta = solveThetaFromA(state.r, parsed);
-      if (!Number.isFinite(solvedTheta)) {
-        return;
-      }
-      state.thetaDeg = clampTheta(solvedTheta);
-      recomputeAndRender();
-    };
-
-    const bindInputPair = (inputEl, sliderEl, handler) => {
-      inputEl.addEventListener("input", () => handler(inputEl.value));
-      sliderEl.addEventListener("input", () => handler(sliderEl.value));
-    };
-
-    bindInputPair(radiusInput, radiusSlider, handleRadiusChange);
-    bindInputPair(thetaInput, thetaSlider, handleThetaChange);
-    bindInputPair(aInput, aSlider, handleAChange);
-
-    recomputeAndRender();
+    angleInput.addEventListener("input", () => setAngle(angleInput.value));
+    angleSlider.addEventListener("input", () => setAngle(angleSlider.value));
+    radiusInput.addEventListener("input", () => {
+      const radiusValue = Number(radiusInput.value);
+      const roundedRadius = Number.isFinite(radiusValue)
+        ? Math.round(radiusValue * 10) / 10
+        : 0;
+      radiusInput.value = roundedRadius.toFixed(1);
+      logicalRadius = roundedRadius;
+      draw();
+    });
 
     function resize() {
       canvas.width = window.innerWidth;
@@ -361,15 +220,20 @@
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       // 円のピクセル半径は常に固定
+      const baseLogicalRadius = 3;
       const radius = basePixelRadius;
-      const angleRad = (state.thetaDeg || 0) * Math.PI / 180;
+      // 入力角度は「垂直からの傾き」として扱い、
+      // 内部計算では (90° + 入力角度) を用いる
+      const angleRad = (90 + angleDeg) * Math.PI / 180;
       const half = angleRad / 2;
       const sinHalfRaw = Math.sin(half);
       const sinHalf = Math.abs(sinHalfRaw) < 1e-6 ? (sinHalfRaw >= 0 ? 1e-6 : -1e-6) : sinHalfRaw;
 
-      const dimensionRadius = state.r || 0;
-      const dimensionA = state.A;
-      const dimensionB = state.B;
+      const dimensionRadius = logicalRadius || 0;
+      // A = r * cot(θ/2) = r * cos(θ/2) / sin(θ/2)
+      const dimensionA = dimensionRadius * Math.cos(half) / sinHalf;
+      // B は従来通り: B = r * (1 + cos θ)
+      const dimensionB = dimensionRadius * (1 + Math.cos(angleRad));
 
       const d = radius / sinHalf;
       const cornerX = centerX - d * Math.cos(half);
@@ -378,6 +242,10 @@
       const horizontalTangentX = cornerX + tangentLength;
       const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
       const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
+      if (radiusPanel) {
+        radiusPanel.style.left = `${centerX + 16}px`;
+        radiusPanel.style.top = `${(centerY + cornerY) / 2 - 10}px`;
+      }
 
       // 円
       ctx.beginPath();
@@ -410,6 +278,16 @@
       // 接点の座標（斜め線と円の接点）
       const tangentX = cornerX + tangentLength * Math.cos(angleRad);
       const tangentY = cornerY + tangentLength * Math.sin(angleRad);
+
+      // 円の一番下（中心直下の水平線）
+      const bottomY = centerY + radius;
+
+      const verticalPx = bottomY - tangentY;
+      const horizontalPx = centerX - tangentX;
+
+      const unitPerPixel = (logicalRadius && radius) ? (logicalRadius / radius) : 0;
+      const verticalValue = verticalPx * unitPerPixel;
+      const horizontalValue = horizontalPx * unitPerPixel;
 
       // 寸法値を小数点以下 3 桁で表示
       ctx.save();
