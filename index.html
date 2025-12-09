@@ -348,13 +348,13 @@
     <h2>円の半径と角度から接点座標を計算</h2>
     <div class="input-row">
       <div>半径 (r):</div>
-      <input id="tab3-radius-input" type="number" value="3.000" min="0.001" step="0.001">
-      <input id="tab3-radius-slider" type="range" min="0.001" max="100" step="0.001" value="3.000">
+      <input id="tab3-radius-input" type="number" value="3.0" min="0.0" step="0.1">
+      <input id="tab3-radius-slider" type="range" min="0.0" max="100" step="0.1" value="3.0">
     </div>
     <div class="input-row">
       <div>角度（度）:</div>
-      <input id="tab3-theta-input" type="number" value="0.00" min="0" max="89.99" step="0.01">
-      <input id="tab3-theta-slider" type="range" min="0" max="89.99" step="0.01" value="0.00">
+      <input id="tab3-theta-input" type="number" value="0.0" min="0" max="89.9" step="0.1">
+      <input id="tab3-theta-slider" type="range" min="0" max="89.9" step="0.1" value="0.0">
     </div>
     <div class="result-grid">
       <div class="result-card">
@@ -548,11 +548,11 @@ function updateTab3Outputs() {
   if (Number.isFinite(radiusVal)) {
     tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
     tab3RadiusSlider.value = radiusVal;
-    tab3RadiusInput.value = radiusVal.toFixed(3);
+    tab3RadiusInput.value = radiusVal.toFixed(1);
   }
 
   if (Number.isFinite(thetaDeg)) {
-    tab3ThetaInput.value = thetaDeg.toFixed(2);
+    tab3ThetaInput.value = thetaDeg.toFixed(1);
     tab3ThetaSlider.value = thetaDeg;
   }
 
@@ -629,10 +629,7 @@ function drawTab3Diagram(values) {
 
   const dir = { x: -Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
-  const lineStart = {
-    x: tangentCanvas.x - dir.x * lineLength,
-    y: tangentCanvas.y - dir.y * lineLength,
-  };
+  const lineStart = tangentCanvas;
   const lineEnd = {
     x: tangentCanvas.x + dir.x * lineLength,
     y: tangentCanvas.y + dir.y * lineLength,
@@ -664,24 +661,6 @@ function drawTab3Diagram(values) {
   tab3Ctx.beginPath();
   tab3Ctx.moveTo(lineStart.x, lineStart.y);
   tab3Ctx.lineTo(lineEnd.x, lineEnd.y);
-  tab3Ctx.stroke();
-  tab3Ctx.restore();
-
-  tab3Ctx.save();
-  tab3Ctx.strokeStyle = '#2c5dda';
-  tab3Ctx.lineWidth = 5;
-  tab3Ctx.beginPath();
-  tab3Ctx.moveTo(center.x, center.y);
-  tab3Ctx.lineTo(center.x, tangentCanvas.y);
-  tab3Ctx.stroke();
-  tab3Ctx.restore();
-
-  tab3Ctx.save();
-  tab3Ctx.strokeStyle = '#11a861';
-  tab3Ctx.lineWidth = 4;
-  tab3Ctx.beginPath();
-  tab3Ctx.moveTo(bottomCanvas.x, bottomCanvas.y);
-  tab3Ctx.lineTo(tangentCanvas.x, tangentCanvas.y);
   tab3Ctx.stroke();
   tab3Ctx.restore();
 
