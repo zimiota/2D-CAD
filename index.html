@@ -345,38 +345,29 @@
 </div>
 <div id="calc3" class="tab-content">
   <div class="tab-section">
-    <h2>円の半径と A から B・C・D を計算</h2>
+    <h2>円の半径と角度から接点座標を計算</h2>
     <div class="input-row">
       <div>半径 (r):</div>
       <input id="tab3-radius-input" type="number" value="3.000" min="0.001" step="0.001">
       <input id="tab3-radius-slider" type="range" min="0.001" max="100" step="0.001" value="3.000">
     </div>
     <div class="input-row">
-      <div>A 値:</div>
-      <input id="tab3-a-input" type="number" value="3.000" min="0.001" step="0.001">
-      <input id="tab3-a-slider" type="range" min="0.001" max="100" step="0.001" value="3.000">
-    </div>
-    <div class="input-row">
-      <div>θ（度）:</div>
+      <div>角度（度）:</div>
       <input id="tab3-theta-input" type="number" value="0.00" min="0" max="89.99" step="0.01">
       <input id="tab3-theta-slider" type="range" min="0" max="89.99" step="0.01" value="0.00">
     </div>
     <div class="result-grid">
       <div class="result-card">
+        <div class="label">A</div>
+        <span class="value" id="tab3-a">---</span>
+      </div>
+      <div class="result-card">
         <div class="label">B</div>
         <span class="value" id="tab3-b">---</span>
       </div>
-      <div class="result-card">
-        <div class="label">C</div>
-        <span class="value" id="tab3-c">---</span>
-      </div>
-      <div class="result-card">
-        <div class="label">D</div>
-        <span class="value" id="tab3-d">---</span>
-      </div>
     </div>
     <div style="margin-top: 10px; font-size: 22px; color: #445;">
-      入力と出力はすべて小数点以下 3 位に丸めて表示します。
+      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると右上へ傾きます。
     </div>
     <div id="tab3-diagram-wrapper" style="margin-top: 24px; text-align: center;">
       <canvas id="tab3-diagram" width="1100" height="760" style="max-width: 100%; border: 1px solid #ccc; background: #fafafa;"></canvas>
@@ -509,42 +500,37 @@ function updateAngle2() {
 }
 updateAngle2();
 
-// ==== Tab3: 半径と A/θ から B/C/D を計算 ====
+// ==== Tab3: 半径と角度から接点の A/B を計算 ====
 const tab3RadiusInput = document.getElementById('tab3-radius-input');
 const tab3RadiusSlider = document.getElementById('tab3-radius-slider');
-const tab3AInput = document.getElementById('tab3-a-input');
-const tab3ASlider = document.getElementById('tab3-a-slider');
 const tab3ThetaInput = document.getElementById('tab3-theta-input');
 const tab3ThetaSlider = document.getElementById('tab3-theta-slider');
 const tab3B = document.getElementById('tab3-b');
-const tab3C = document.getElementById('tab3-c');
-const tab3D = document.getElementById('tab3-d');
+const tab3A = document.getElementById('tab3-a');
 const tab3Diagram = document.getElementById('tab3-diagram');
 const tab3Ctx = tab3Diagram.getContext('2d');
 
 const format3 = (value) => Number.isFinite(value) ? value.toFixed(3) : '---';
-const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
-
 function computeFromRadiusTheta(radius, thetaDeg) {
   if (!Number.isFinite(radius) || !Number.isFinite(thetaDeg) || radius <= 0 || thetaDeg < 0 || thetaDeg >= 90) {
-    return { a: NaN, b: NaN, c: NaN, d: NaN, thetaRad: NaN };
+    return { a: NaN, b: NaN, thetaRad: NaN };
   }
 
   const thetaRad = thetaDeg * Math.PI / 180;
-  const cosAngle = Math.cos(thetaRad);
   const sinAngle = Math.sin(thetaRad);
+  const cosAngle = Math.cos(thetaRad);
 
   const tangentX = radius * cosAngle;
   const tangentY = -radius * sinAngle;
 
-  const centerToTangent = radius * sinAngle;
-  const bottomToTangent = radius * (1 - sinAngle);
+  // A: 円の中心から接点までの水平距離（x 座標）
+  const a = tangentX;
+  // B: 円の下端から接点までの縦距離
+  const b = radius * (1 - sinAngle);
 
   return {
-    a: tangentX,
-    b: centerToTangent,
-    c: bottomToTangent,
-    d: tangentX,
+    a,
+    b,
     thetaRad,
     tangentPoint: { x: tangentX, y: tangentY },
   };
@@ -552,12 +538,11 @@ function computeFromRadiusTheta(radius, thetaDeg) {
 
 let isSyncingTab3 = false;
 
-function updateTab3Outputs(source = 'a') {
+function updateTab3Outputs() {
   if (isSyncingTab3) return;
   isSyncingTab3 = true;
 
   const radiusVal = Number(tab3RadiusInput.value);
-  let aVal = Number(tab3AInput.value);
   let thetaDeg = Number(tab3ThetaInput.value);
 
   if (Number.isFinite(radiusVal)) {
@@ -566,43 +551,20 @@ function updateTab3Outputs(source = 'a') {
     tab3RadiusInput.value = radiusVal.toFixed(3);
   }
 
-  if (source === 'a') {
-    if (Number.isFinite(aVal) && Number.isFinite(radiusVal) && aVal >= 0) {
-      const ratio = clamp(aVal / radiusVal, -1, 1);
-      const newTheta = Math.acos(ratio) * 180 / Math.PI;
-      thetaDeg = newTheta;
-      tab3ThetaInput.value = newTheta.toFixed(2);
-      tab3ThetaSlider.value = newTheta;
-    }
-  } else {
-    if (Number.isFinite(thetaDeg) && thetaDeg >= 0 && thetaDeg < 90 && Number.isFinite(radiusVal)) {
-      const thetaRad = thetaDeg * Math.PI / 180;
-      const newA = radiusVal * Math.cos(thetaRad);
-      aVal = newA;
-      tab3AInput.value = newA.toFixed(3);
-      tab3ASlider.max = Math.max(Number(tab3ASlider.max), newA);
-      tab3ASlider.value = newA;
-    }
+  if (Number.isFinite(thetaDeg)) {
+    tab3ThetaInput.value = thetaDeg.toFixed(2);
+    tab3ThetaSlider.value = thetaDeg;
   }
 
-  if (Number.isFinite(aVal)) {
-    tab3AInput.value = aVal.toFixed(3);
-    tab3ASlider.max = Math.max(Number(tab3ASlider.max), aVal);
-    tab3ASlider.value = aVal;
-  }
-
-  const { a, b, c, d, thetaRad, tangentPoint } = computeFromRadiusTheta(radiusVal, thetaDeg);
+  const { a, b, thetaRad, tangentPoint } = computeFromRadiusTheta(radiusVal, thetaDeg);
 
   tab3B.textContent = format3(b);
-  tab3C.textContent = format3(c);
-  tab3D.textContent = format3(d);
+  tab3A.textContent = format3(a);
 
   drawTab3Diagram({
     radiusVal,
     aVal: a,
     bVal: b,
-    cVal: c,
-    dVal: d,
     thetaDeg,
     thetaRad,
     tangentPoint,
@@ -611,13 +573,13 @@ function updateTab3Outputs(source = 'a') {
   isSyncingTab3 = false;
 }
 
-const bindSync = (inputEl, sliderEl, source) => {
+const bindSync = (inputEl, sliderEl) => {
   inputEl.addEventListener('input', () => {
     const val = Number(inputEl.value);
     if (Number.isFinite(val)) {
       sliderEl.value = val;
     }
-    updateTab3Outputs(source);
+    updateTab3Outputs();
   });
 
   sliderEl.addEventListener('input', () => {
@@ -628,24 +590,23 @@ const bindSync = (inputEl, sliderEl, source) => {
     } else {
       inputEl.value = val;
     }
-    updateTab3Outputs(source);
+    updateTab3Outputs();
   });
 };
 
-bindSync(tab3RadiusInput, tab3RadiusSlider, 'radius');
-bindSync(tab3AInput, tab3ASlider, 'a');
-bindSync(tab3ThetaInput, tab3ThetaSlider, 'theta');
-updateTab3Outputs('a');
+bindSync(tab3RadiusInput, tab3RadiusSlider);
+bindSync(tab3ThetaInput, tab3ThetaSlider);
+updateTab3Outputs();
 
 function drawTab3Diagram(values) {
-  const { radiusVal, aVal, bVal, cVal, dVal, thetaDeg, thetaRad, tangentPoint } = values;
+  const { radiusVal, aVal, bVal, thetaDeg, thetaRad, tangentPoint } = values;
   tab3Ctx.clearRect(0, 0, tab3Diagram.width, tab3Diagram.height);
 
   if (!Number.isFinite(radiusVal) || !Number.isFinite(thetaRad) || radiusVal <= 0 || thetaDeg < 0 || thetaDeg >= 90) {
     tab3Ctx.fillStyle = '#444';
     tab3Ctx.font = '28px sans-serif';
     tab3Ctx.textAlign = 'center';
-    tab3Ctx.fillText('半径・A・θ を入力すると図が表示されます', tab3Diagram.width / 2, tab3Diagram.height / 2);
+    tab3Ctx.fillText('半径と角度を入力すると図が表示されます', tab3Diagram.width / 2, tab3Diagram.height / 2);
     return;
   }
 
@@ -664,7 +625,7 @@ function drawTab3Diagram(values) {
   const center = toCanvas(0, 0);
   const tangent = tangentPoint || { x: radiusVal, y: 0 };
   const tangentCanvas = toCanvas(tangent.x, tangent.y);
-  const bottomCanvas = toCanvas(0, -radiusVal);
+  const bottomCanvas = toCanvas(tangent.x, -radiusVal);
 
   const dir = { x: Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
@@ -716,19 +677,10 @@ function drawTab3Diagram(values) {
   tab3Ctx.restore();
 
   tab3Ctx.save();
-  tab3Ctx.strokeStyle = '#ff7f11';
-  tab3Ctx.lineWidth = 4;
-  tab3Ctx.beginPath();
-  tab3Ctx.moveTo(bottomCanvas.x, bottomCanvas.y);
-  tab3Ctx.lineTo(bottomCanvas.x, tangentCanvas.y);
-  tab3Ctx.stroke();
-  tab3Ctx.restore();
-
-  tab3Ctx.save();
   tab3Ctx.strokeStyle = '#11a861';
   tab3Ctx.lineWidth = 4;
   tab3Ctx.beginPath();
-  tab3Ctx.moveTo(center.x, center.y);
+  tab3Ctx.moveTo(bottomCanvas.x, bottomCanvas.y);
   tab3Ctx.lineTo(tangentCanvas.x, tangentCanvas.y);
   tab3Ctx.stroke();
   tab3Ctx.restore();
@@ -752,13 +704,9 @@ function drawTab3Diagram(values) {
   tab3Ctx.fillText(`角度 θ: ${thetaDeg.toFixed(2)}°`, 28, 44);
   tab3Ctx.fillText(`半径 r: ${radiusVal.toFixed(3)}`, 28, 76);
 
-  const centerLabelY = (center.y + tangentCanvas.y) / 2;
   const bottomLabelY = (bottomCanvas.y + tangentCanvas.y) / 2;
-
   tab3Ctx.fillText(`A (接点 x): ${format3(aVal)}`, tangentCanvas.x + 12, tangentCanvas.y - 28);
-  tab3Ctx.fillText(`B (中心→接点の縦距離): ${format3(bVal)}`, center.x + 12, centerLabelY);
-  tab3Ctx.fillText(`C (底→接点の縦距離): ${format3(cVal)}`, bottomCanvas.x + 12, bottomLabelY);
-  tab3Ctx.fillText(`D (水平距離): ${format3(dVal)}`, tangentCanvas.x + 12, tangentCanvas.y + 12);
+  tab3Ctx.fillText(`B (底→接点の縦距離): ${format3(bVal)}`, bottomCanvas.x + 12, bottomLabelY);
 
   const toUnits = (point) => ({
     x: (point.x - center.x) * unitPerPixel,
@@ -767,7 +715,7 @@ function drawTab3Diagram(values) {
   const formatSigned = (val) => `${val >= 0 ? '+' : ''}${format3(val)}`;
   const relativePoints = [
     { label: '接点', point: tangentCanvas },
-    { label: '円底', point: bottomCanvas },
+    { label: '円底（接点直下）', point: bottomCanvas },
   ];
 
   tab3Ctx.font = '22px sans-serif';
