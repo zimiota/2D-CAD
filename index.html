@@ -559,11 +559,9 @@ function updateTab3Outputs() {
   if (Number.isFinite(radiusVal)) {
     tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
     tab3RadiusSlider.value = radiusVal;
-    tab3RadiusInput.value = radiusVal.toFixed(1);
   }
 
   if (Number.isFinite(thetaDeg)) {
-    tab3ThetaInput.value = thetaDeg.toFixed(1);
     tab3ThetaSlider.value = thetaDeg;
   }
 
@@ -604,6 +602,28 @@ const bindSync = (inputEl, sliderEl) => {
     updateTab3Outputs();
   });
 };
+
+const finalizeWithStep = (inputEl) => {
+  const val = Number(inputEl.value);
+  if (!Number.isFinite(val)) {
+    inputEl.value = '';
+    return;
+  }
+
+  const digits = inputEl.step && inputEl.step.includes('.')
+    ? inputEl.step.split('.')[1].length
+    : 0;
+  inputEl.value = val.toFixed(digits);
+};
+
+tab3RadiusInput.addEventListener('blur', () => {
+  finalizeWithStep(tab3RadiusInput);
+  updateTab3Outputs();
+});
+tab3ThetaInput.addEventListener('blur', () => {
+  finalizeWithStep(tab3ThetaInput);
+  updateTab3Outputs();
+});
 
 bindSync(tab3RadiusInput, tab3RadiusSlider);
 bindSync(tab3ThetaInput, tab3ThetaSlider);
