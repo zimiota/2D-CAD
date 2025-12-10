@@ -10,6 +10,7 @@
     canvas { background: #f0f0f0; display: block; }
     #angle-panel {
       position: absolute;
+      top: 48px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1;
@@ -185,8 +186,6 @@
   <script>
     const canvas = document.getElementById("cad");
     const ctx = canvas.getContext("2d");
-    const anglePanel = document.getElementById("angle-panel");
-    const tabs = document.getElementById("tabs");
     const angleInput = document.getElementById("angle-input");
     const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
@@ -264,13 +263,6 @@
       if (radiusPanel) {
         radiusPanel.style.left = `${centerX + 16}px`;
         radiusPanel.style.top = `${(centerY + cornerY) / 2 - 10}px`;
-      }
-
-      if (anglePanel && tabs) {
-        const tabsRect = tabs.getBoundingClientRect();
-        const topOfCircle = centerY - radius;
-        const midpointY = tabsRect.bottom + (topOfCircle - tabsRect.bottom) / 2;
-        anglePanel.style.top = `${midpointY}px`;
       }
 
       // 円
