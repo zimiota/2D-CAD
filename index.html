@@ -195,15 +195,26 @@
     };
     angleInput.addEventListener("input", () => setAngle(angleInput.value));
     angleSlider.addEventListener("input", () => setAngle(angleSlider.value));
-    radiusInput.addEventListener("input", () => {
+    const updateRadiusFromInput = () => {
+      const radiusValue = Number(radiusInput.value);
+      if (Number.isFinite(radiusValue)) {
+        logicalRadius = radiusValue;
+        draw();
+      }
+    };
+
+    const finalizeRadiusInput = () => {
       const radiusValue = Number(radiusInput.value);
       const roundedRadius = Number.isFinite(radiusValue)
         ? Math.round(radiusValue * 10) / 10
         : 0;
-      radiusInput.value = roundedRadius.toFixed(1);
       logicalRadius = roundedRadius;
+      radiusInput.value = roundedRadius.toFixed(1);
       draw();
-    });
+    };
+
+    radiusInput.addEventListener("input", updateRadiusFromInput);
+    radiusInput.addEventListener("blur", finalizeRadiusInput);
 
     function resize() {
       canvas.width = window.innerWidth;
