@@ -186,7 +186,6 @@
   <script>
     const canvas = document.getElementById("cad");
     const ctx = canvas.getContext("2d");
-    const anglePanel = document.getElementById("angle-panel");
     const angleInput = document.getElementById("angle-input");
     const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
@@ -261,18 +260,9 @@
       const horizontalTangentX = cornerX + tangentLength;
       const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
       const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
-      if (anglePanel) {
-        const aLabelX = (cornerX + centerX) / 2;
-        const aLabelY = cornerY - 20;
-        anglePanel.style.left = `${aLabelX}px`;
-        anglePanel.style.top = `${aLabelY - 60}px`;
-      }
       if (radiusPanel) {
-        const radiusAnchorX = centerX + radius * 0.5;
-        const radiusAnchorY = centerY + radius * 0.15;
-        radiusPanel.style.left = `${radiusAnchorX}px`;
-        radiusPanel.style.top = `${radiusAnchorY}px`;
-        radiusPanel.style.transform = "translate(-50%, -50%)";
+        radiusPanel.style.left = `${centerX + 16}px`;
+        radiusPanel.style.top = `${(centerY + cornerY) / 2 - 10}px`;
       }
 
       // 円
