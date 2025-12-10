@@ -200,7 +200,6 @@
     let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
     let logicalRadius = Number(radiusInput.value) || 3;
-    let bLabelFixedX = null;
     const setAngle = (value) => {
       angleDeg = Number(value) || 0;
       angleInput.value = angleDeg;
@@ -337,16 +336,18 @@
         cornerY - 20
       );
 
-      // B: 角と接点の中間付近（左上寄り）
-      ctx.textAlign = "right";
-      if (bLabelFixedX === null) {
-        bLabelFixedX = cornerX - 32;
-      }
-      ctx.fillText(
-        `B: ${dimensionB.toFixed(3)}`,
-        bLabelFixedX,
-        (cornerY + tangentY) / 2 - 10
-      );
+      // B: 斜線の左側に固定オフセットで配置
+      const lineDx = angledTangentX - cornerX;
+      const lineDy = angledTangentY - cornerY;
+      const lineLen = Math.hypot(lineDx, lineDy) || 1;
+      const leftNormal = { x: -lineDy / lineLen, y: lineDx / lineLen };
+      const bBaseX = (cornerX + tangentX) / 2;
+      const bBaseY = (cornerY + tangentY) / 2 - 10;
+      const bOffset = 40;
+      const bPosX = bBaseX + leftNormal.x * bOffset;
+      const bPosY = bBaseY + leftNormal.y * bOffset;
+      ctx.textAlign = leftNormal.x >= 0 ? "left" : "right";
+      ctx.fillText(`B: ${dimensionB.toFixed(3)}`, bPosX, bPosY);
 
       ctx.restore();
     }
