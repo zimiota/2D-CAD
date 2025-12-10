@@ -268,8 +268,9 @@
       const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
       const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
       if (radiusPanel) {
-        radiusPanel.style.left = `${centerX + 16}px`;
-        radiusPanel.style.top = `${(centerY + cornerY) / 2 - 10}px`;
+        radiusPanel.style.left = `${centerX + radius * 0.5}px`;
+        radiusPanel.style.top = `${centerY - radius * 0.5}px`;
+        radiusPanel.style.transform = "translate(-50%, -50%)";
       }
 
       // 円
