@@ -37,7 +37,11 @@
     .box {
       margin-bottom: 10px;
     }
-#tabs { display:flex; background:#ddd; }
+.tabs-wrapper {
+  margin-top: 14px;
+}
+
+#tabs { display:flex; background:#ddd; padding: 6px 10px; gap: 8px; }
 .tab-button {
   flex: 1;
   padding: 1.4px 2px;
@@ -162,11 +166,13 @@
   </style>
 </head>
 <body>
-  <div id="tabs">
-  <button class="tab-button active" data-tab="calc1">A/B CAD</button>
-  <button class="tab-button" data-tab="calc2">2.5D Angle</button>
-  <button class="tab-button" data-tab="calc3">TouchPoint</button>
-</div>
+  <div class="tabs-wrapper">
+    <div id="tabs">
+      <button class="tab-button active" data-tab="calc1">A/B CAD</button>
+      <button class="tab-button" data-tab="calc2">2.5D Angle</button>
+      <button class="tab-button" data-tab="calc3">TouchPoint</button>
+    </div>
+  </div>
 <div id="calc1" class="tab-content active">
   <div id="angle-panel">
     <label>
