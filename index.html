@@ -38,7 +38,14 @@
       margin-bottom: 10px;
     }
 #tabs { display:flex; background:#ddd; }
-.tab-button { flex:1; padding:10px; cursor:pointer; border:none; background:#ccc; }
+.tab-button {
+  flex: 1;
+  padding: 30px 10px;
+  cursor: pointer;
+  border: none;
+  background: #ccc;
+  font-size: 32px;
+}
 .tab-button.active { background:#fff; border-bottom:2px solid #000; }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
@@ -158,7 +165,7 @@
   <div id="tabs">
   <button class="tab-button active" data-tab="calc1">A/B CAD</button>
   <button class="tab-button" data-tab="calc2">2.5D Angle</button>
-  <button class="tab-button" data-tab="calc3">TAB3</button>
+  <button class="tab-button" data-tab="calc3">TouchPoint</button>
 </div>
 <div id="calc1" class="tab-content active">
   <div id="angle-panel">
