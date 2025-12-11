@@ -403,7 +403,7 @@
       </div>
     </div>
     <div style="margin-top: 10px; font-size: 22px; color: #445;">
-      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると左上へ傾きます。
+      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると右上へ傾きます。
     </div>
     <div id="tab3-diagram-wrapper" style="margin-top: 24px; text-align: center;">
       <canvas id="tab3-diagram" width="1100" height="760" style="max-width: 100%; border: 1px solid #ccc; background: #fafafa;"></canvas>
@@ -560,7 +560,7 @@ function computeFromRadiusTheta(radius, thetaDeg) {
   const cosAngle = Math.cos(thetaRad);
 
   const tangentX = radius * cosAngle;
-  const tangentY = radius * sinAngle;
+  const tangentY = -radius * sinAngle;
 
   // A: 円の中心から接点までの水平距離（x 座標）
   const a = tangentX;
@@ -620,7 +620,7 @@ function updateTab3Outputs() {
     cVal >= b
   ) {
     const dx = Math.sin(thetaRad);
-    const dy = +Math.cos(thetaRad);
+    const dy = Math.cos(thetaRad);
     const yTarget = cVal - radiusVal;
     yFromBottom = yTarget;
     const t = dy !== 0 ? (yTarget - tangentPoint.y) / dy : NaN;
@@ -744,7 +744,7 @@ function drawTab3Diagram(values) {
   const yFromBottomCanvas = Number.isFinite(yFromBottom) ? toCanvas(0, yFromBottom) : null;
   const cLinePointCanvas = cLinePoint ? toCanvas(cLinePoint.x, cLinePoint.y) : null;
 
-  const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+  const dir = { x: Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = tangentCanvas;
   const lineEnd = {
