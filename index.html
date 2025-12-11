@@ -560,7 +560,7 @@ function computeFromRadiusTheta(radius, thetaDeg) {
   const cosAngle = Math.cos(thetaRad);
 
   const tangentX = radius * cosAngle;
-  const tangentY = -radius * sinAngle;
+  const tangentY = radius * sinAngle;
 
   // A: 円の中心から接点までの水平距離（x 座標）
   const a = tangentX;
@@ -621,13 +621,11 @@ function updateTab3Outputs() {
   ) {
     const relativeY = cVal - radiusVal;
     yFromBottom = relativeY;
-    const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
-    if (Math.abs(dir.y) > 1e-9) {
-      const t = (yFromBottom - tangentPoint.y) / dir.y;
-      if (t >= 0) {
-        xAtC = tangentPoint.x + dir.x * t;
-        cLinePoint = { x: xAtC, y: yFromBottom };
-      }
+    const dir = { x: Math.sin(thetaRad), y: Math.cos(thetaRad) };
+    const t = dir.y !== 0 ? (yFromBottom - tangentPoint.y) / dir.y : NaN;
+    if (Number.isFinite(t) && t >= 0) {
+      xAtC = tangentPoint.x + dir.x * t;
+      cLinePoint = { x: xAtC, y: yFromBottom };
     }
   }
 
@@ -745,12 +743,12 @@ function drawTab3Diagram(values) {
   const yFromBottomCanvas = Number.isFinite(yFromBottom) ? toCanvas(0, yFromBottom) : null;
   const cLinePointCanvas = cLinePoint ? toCanvas(cLinePoint.x, cLinePoint.y) : null;
 
-  const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+  const dir = { x: Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = tangentCanvas;
   const lineEnd = {
     x: tangentCanvas.x + dir.x * lineLength,
-    y: tangentCanvas.y + dir.y * lineLength,
+    y: tangentCanvas.y - dir.y * lineLength,
   };
 
   tab3Ctx.save();
