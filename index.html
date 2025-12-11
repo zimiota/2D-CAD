@@ -616,11 +616,13 @@ function updateTab3Outputs() {
     radiusVal > 0 &&
     thetaDeg >= 0 &&
     thetaDeg < 90 &&
-    Number.isFinite(cVal)
+    Number.isFinite(cVal) &&
+    cVal >= 0 &&
+    cVal <= 50
   ) {
-    const cMax = Math.max(radiusVal * 2, Number(tab3CSlider.max));
-    if (cVal >= 0 && cVal <= cMax) {
-      yFromBottom = -radiusVal + cVal;
+    const relativeY = cVal - radiusVal;
+    if (relativeY >= 0) {
+      yFromBottom = relativeY;
       const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
       if (Math.abs(dir.y) > 1e-9) {
         const t = (yFromBottom - tangentPoint.y) / dir.y;
