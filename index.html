@@ -385,7 +385,7 @@
     </div>
     <div class="input-row">
       <div>円底からの Y 座標 (C):</div>
-      <input id="tab3-c-input" type="number" value="1.0" min="0.0" step="0.1">
+      <input id="tab3-c-input" type="number" value="1.0" min="0.0" max="50" step="0.1">
       <input id="tab3-c-slider" type="range" min="0.0" max="50" step="0.1" value="1.0">
     </div>
     <div class="result-grid">
@@ -583,17 +583,12 @@ function updateTab3Outputs() {
 
   const radiusVal = Number(tab3RadiusInput.value);
   let thetaDeg = Number(tab3ThetaInput.value);
-  const cVal = Number(tab3CInput.value);
+  const rawCVal = Number(tab3CInput.value);
+  const cVal = Number.isFinite(rawCVal) ? Math.min(rawCVal, 50) : rawCVal;
 
   if (Number.isFinite(radiusVal)) {
     tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
     tab3RadiusSlider.value = radiusVal;
-
-    const recommendedCMax = Math.max(50, radiusVal * 2);
-    const currentCMax = Number(tab3CSlider.max);
-    if (!Number.isFinite(currentCMax) || currentCMax < recommendedCMax) {
-      tab3CSlider.max = recommendedCMax;
-    }
   }
 
   if (Number.isFinite(thetaDeg)) {
@@ -602,6 +597,9 @@ function updateTab3Outputs() {
 
   if (Number.isFinite(cVal)) {
     tab3CSlider.value = cVal;
+    if (rawCVal > 50) {
+      tab3CInput.value = cVal.toFixed(1);
+    }
   }
 
   const { a, b, thetaRad, tangentPoint } = computeFromRadiusTheta(radiusVal, thetaDeg);
@@ -617,19 +615,18 @@ function updateTab3Outputs() {
     thetaDeg >= 0 &&
     thetaDeg < 90 &&
     Number.isFinite(cVal) &&
-    cVal >= 0 &&
+    Number.isFinite(b) &&
+    cVal >= b &&
     cVal <= 50
   ) {
     const relativeY = cVal - radiusVal;
-    if (relativeY >= 0) {
-      yFromBottom = relativeY;
-      const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
-      if (Math.abs(dir.y) > 1e-9) {
-        const t = (yFromBottom - tangentPoint.y) / dir.y;
-        if (t >= 0) {
-          xAtC = tangentPoint.x + dir.x * t;
-          cLinePoint = { x: xAtC, y: yFromBottom };
-        }
+    yFromBottom = relativeY;
+    const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+    if (Math.abs(dir.y) > 1e-9) {
+      const t = (yFromBottom - tangentPoint.y) / dir.y;
+      if (t >= 0) {
+        xAtC = tangentPoint.x + dir.x * t;
+        cLinePoint = { x: xAtC, y: yFromBottom };
       }
     }
   }
