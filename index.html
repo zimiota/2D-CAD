@@ -616,7 +616,8 @@ function updateTab3Outputs() {
     thetaDeg < 90 &&
     Number.isFinite(cVal) &&
     Number.isFinite(b) &&
-    cVal <= 50
+    cVal <= 50 &&
+    cVal >= b
   ) {
     const relativeY = cVal - radiusVal;
     yFromBottom = relativeY;
