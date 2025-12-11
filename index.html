@@ -383,6 +383,11 @@
       <input id="tab3-theta-input" type="number" value="0.0" min="0" max="89.9" step="0.1">
       <input id="tab3-theta-slider" type="range" min="0" max="89.9" step="0.1" value="0.0">
     </div>
+    <div class="input-row">
+      <div>円底からの Y 座標 (C):</div>
+      <input id="tab3-c-input" type="number" value="1.0" min="0.0" step="0.1">
+      <input id="tab3-c-slider" type="range" min="0.0" max="200" step="0.1" value="1.0">
+    </div>
     <div class="result-grid">
       <div class="result-card">
         <div class="label">A</div>
@@ -391,6 +396,10 @@
       <div class="result-card">
         <div class="label">B</div>
         <span class="value" id="tab3-b">---</span>
+      </div>
+      <div class="result-card">
+        <div class="label">X (C での斜線交点)</div>
+        <span class="value" id="tab3-xc">---</span>
       </div>
     </div>
     <div style="margin-top: 10px; font-size: 22px; color: #445;">
@@ -532,8 +541,11 @@ const tab3RadiusInput = document.getElementById('tab3-radius-input');
 const tab3RadiusSlider = document.getElementById('tab3-radius-slider');
 const tab3ThetaInput = document.getElementById('tab3-theta-input');
 const tab3ThetaSlider = document.getElementById('tab3-theta-slider');
+const tab3CInput = document.getElementById('tab3-c-input');
+const tab3CSlider = document.getElementById('tab3-c-slider');
 const tab3B = document.getElementById('tab3-b');
 const tab3A = document.getElementById('tab3-a');
+const tab3XAtC = document.getElementById('tab3-xc');
 const tab3Diagram = document.getElementById('tab3-diagram');
 const tab3Ctx = tab3Diagram.getContext('2d');
 
@@ -571,20 +583,56 @@ function updateTab3Outputs() {
 
   const radiusVal = Number(tab3RadiusInput.value);
   let thetaDeg = Number(tab3ThetaInput.value);
+  const cVal = Number(tab3CInput.value);
 
   if (Number.isFinite(radiusVal)) {
     tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
     tab3RadiusSlider.value = radiusVal;
+
+    const recommendedCMax = radiusVal * 2;
+    const currentCMax = Number(tab3CSlider.max);
+    if (!Number.isFinite(currentCMax) || currentCMax < recommendedCMax) {
+      tab3CSlider.max = recommendedCMax;
+    }
   }
 
   if (Number.isFinite(thetaDeg)) {
     tab3ThetaSlider.value = thetaDeg;
   }
 
+  if (Number.isFinite(cVal)) {
+    tab3CSlider.value = cVal;
+  }
+
   const { a, b, thetaRad, tangentPoint } = computeFromRadiusTheta(radiusVal, thetaDeg);
+
+  let xAtC = NaN;
+  let cLinePoint = null;
+  let yFromBottom = NaN;
+
+  if (
+    Number.isFinite(radiusVal) &&
+    Number.isFinite(thetaRad) &&
+    radiusVal > 0 &&
+    thetaDeg >= 0 &&
+    thetaDeg < 90 &&
+    Number.isFinite(cVal)
+  ) {
+    const cMax = radiusVal * 2;
+    if (cVal >= 0 && cVal <= cMax) {
+      yFromBottom = -radiusVal + cVal;
+      const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+      if (Math.abs(dir.y) > 1e-9) {
+        const t = (yFromBottom - tangentPoint.y) / dir.y;
+        xAtC = tangentPoint.x + dir.x * t;
+        cLinePoint = { x: xAtC, y: yFromBottom };
+      }
+    }
+  }
 
   tab3B.textContent = format3(b);
   tab3A.textContent = format3(a);
+  tab3XAtC.textContent = format3(xAtC);
 
   drawTab3Diagram({
     radiusVal,
@@ -593,6 +641,10 @@ function updateTab3Outputs() {
     thetaDeg,
     thetaRad,
     tangentPoint,
+    cVal,
+    xAtC,
+    cLinePoint,
+    yFromBottom,
   });
 
   isSyncingTab3 = false;
@@ -640,13 +692,29 @@ tab3ThetaInput.addEventListener('blur', () => {
   finalizeWithStep(tab3ThetaInput);
   updateTab3Outputs();
 });
+tab3CInput.addEventListener('blur', () => {
+  finalizeWithStep(tab3CInput);
+  updateTab3Outputs();
+});
 
 bindSync(tab3RadiusInput, tab3RadiusSlider);
 bindSync(tab3ThetaInput, tab3ThetaSlider);
+bindSync(tab3CInput, tab3CSlider);
 updateTab3Outputs();
 
 function drawTab3Diagram(values) {
-  const { radiusVal, aVal, bVal, thetaDeg, thetaRad, tangentPoint } = values;
+  const {
+    radiusVal,
+    aVal,
+    bVal,
+    thetaDeg,
+    thetaRad,
+    tangentPoint,
+    cVal,
+    xAtC,
+    cLinePoint,
+    yFromBottom,
+  } = values;
   tab3Ctx.clearRect(0, 0, tab3Diagram.width, tab3Diagram.height);
 
   if (!Number.isFinite(radiusVal) || !Number.isFinite(thetaRad) || radiusVal <= 0 || thetaDeg < 0 || thetaDeg >= 90) {
@@ -673,6 +741,8 @@ function drawTab3Diagram(values) {
   const tangent = tangentPoint || { x: radiusVal, y: 0 };
   const tangentCanvas = toCanvas(tangent.x, tangent.y);
   const bottomCanvas = toCanvas(tangent.x, -radiusVal);
+  const yFromBottomCanvas = Number.isFinite(yFromBottom) ? toCanvas(0, yFromBottom) : null;
+  const cLinePointCanvas = cLinePoint ? toCanvas(cLinePoint.x, cLinePoint.y) : null;
 
   const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
@@ -693,6 +763,18 @@ function drawTab3Diagram(values) {
   tab3Ctx.lineTo(width - 22, center.y);
   tab3Ctx.stroke();
   tab3Ctx.restore();
+
+  if (yFromBottomCanvas) {
+    tab3Ctx.save();
+    tab3Ctx.strokeStyle = '#e58a8a';
+    tab3Ctx.setLineDash([8, 6]);
+    tab3Ctx.lineWidth = 2;
+    tab3Ctx.beginPath();
+    tab3Ctx.moveTo(22, yFromBottomCanvas.y);
+    tab3Ctx.lineTo(width - 22, yFromBottomCanvas.y);
+    tab3Ctx.stroke();
+    tab3Ctx.restore();
+  }
 
   tab3Ctx.save();
   tab3Ctx.lineWidth = 4;
@@ -723,16 +805,31 @@ function drawTab3Diagram(values) {
   tab3Ctx.fillText('接点', tangentCanvas.x + 10, tangentCanvas.y - 10);
   tab3Ctx.restore();
 
+  if (cLinePointCanvas) {
+    tab3Ctx.save();
+    tab3Ctx.fillStyle = '#c0392b';
+    tab3Ctx.beginPath();
+    tab3Ctx.arc(cLinePointCanvas.x, cLinePointCanvas.y, 7, 0, Math.PI * 2);
+    tab3Ctx.fill();
+    tab3Ctx.restore();
+  }
+
   tab3Ctx.save();
   tab3Ctx.fillStyle = '#222';
   tab3Ctx.font = '28px sans-serif';
   tab3Ctx.textAlign = 'left';
   tab3Ctx.fillText(`角度 θ: ${thetaDeg.toFixed(2)}°`, 28, 44);
   tab3Ctx.fillText(`半径 r: ${radiusVal.toFixed(3)}`, 28, 76);
+  if (yFromBottomCanvas && Number.isFinite(cVal)) {
+    tab3Ctx.fillText(`C (円底からの Y): ${format3(cVal)}`, 28, yFromBottomCanvas.y - 12);
+  }
 
   const bottomLabelY = (bottomCanvas.y + tangentCanvas.y) / 2;
   tab3Ctx.fillText(`A (接点 x): ${format3(aVal)}`, tangentCanvas.x + 12, tangentCanvas.y - 28);
   tab3Ctx.fillText(`B (底→接点の縦距離): ${format3(bVal)}`, bottomCanvas.x + 12, bottomLabelY);
+  if (cLinePointCanvas) {
+    tab3Ctx.fillText(`X (斜線と Y=C の交点): ${format3(xAtC)}`, cLinePointCanvas.x + 12, cLinePointCanvas.y - 16);
+  }
 
   const toUnits = (point) => ({
     x: (point.x - center.x) * unitPerPixel,
@@ -743,6 +840,9 @@ function drawTab3Diagram(values) {
     { label: '接点', point: tangentCanvas },
     { label: '円底（接点直下）', point: bottomCanvas },
   ];
+  if (cLinePointCanvas) {
+    relativePoints.push({ label: 'Y=C での斜線交点', point: cLinePointCanvas });
+  }
 
   tab3Ctx.font = '22px sans-serif';
   tab3Ctx.fillStyle = '#1f2d3d';
