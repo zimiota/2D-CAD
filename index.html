@@ -619,7 +619,7 @@ function updateTab3Outputs() {
     cVal <= 50 &&
     cVal >= b
   ) {
-    const dx = Math.sin(thetaRad);
+    const dx = -Math.sin(thetaRad);
     const dy = +Math.cos(thetaRad);
     const yTarget = cVal - radiusVal;
     yFromBottom = yTarget;
@@ -744,7 +744,7 @@ function drawTab3Diagram(values) {
   const yFromBottomCanvas = Number.isFinite(yFromBottom) ? toCanvas(0, yFromBottom) : null;
   const cLinePointCanvas = cLinePoint ? toCanvas(cLinePoint.x, cLinePoint.y) : null;
 
-  const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+  const dir = { x: -Math.sin(thetaRad), y: -Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = tangentCanvas;
   const lineEnd = {
