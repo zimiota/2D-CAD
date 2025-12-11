@@ -623,9 +623,11 @@ function updateTab3Outputs() {
       yFromBottom = -radiusVal + cVal;
       const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
       if (Math.abs(dir.y) > 1e-9) {
-        const t = yFromBottom / dir.y;
-        xAtC = dir.x * t;
-        cLinePoint = { x: xAtC, y: yFromBottom };
+        const t = (yFromBottom - tangentPoint.y) / dir.y;
+        if (t >= 0) {
+          xAtC = tangentPoint.x + dir.x * t;
+          cLinePoint = { x: xAtC, y: yFromBottom };
+        }
       }
     }
   }
@@ -746,13 +748,10 @@ function drawTab3Diagram(values) {
 
   const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
-  const lineStart = {
-    x: center.x - dir.x * lineLength,
-    y: center.y - dir.y * lineLength,
-  };
+  const lineStart = tangentCanvas;
   const lineEnd = {
-    x: center.x + dir.x * lineLength,
-    y: center.y + dir.y * lineLength,
+    x: tangentCanvas.x + dir.x * lineLength,
+    y: tangentCanvas.y + dir.y * lineLength,
   };
 
   tab3Ctx.save();
