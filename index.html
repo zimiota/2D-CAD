@@ -403,7 +403,7 @@
       </div>
     </div>
     <div style="margin-top: 10px; font-size: 22px; color: #445;">
-      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると左上へ傾きます。
+      入力と出力はすべて小数点以下 3 位に丸めて表示します。角度 0° では円の右端に垂直線、角度が増えると右上へ傾きます。
     </div>
     <div id="tab3-diagram-wrapper" style="margin-top: 24px; text-align: center;">
       <canvas id="tab3-diagram" width="1100" height="760" style="max-width: 100%; border: 1px solid #ccc; background: #fafafa;"></canvas>
@@ -551,21 +551,25 @@ const tab3Ctx = tab3Diagram.getContext('2d');
 
 const format3 = (value) => Number.isFinite(value) ? value.toFixed(3) : '---';
 function computeFromRadiusTheta(radius, thetaDeg) {
+  // 入力角度は 0〜90° の範囲を許容。その値を 360° から引いた角度で計算する
   if (!Number.isFinite(radius) || !Number.isFinite(thetaDeg) || radius <= 0 || thetaDeg < 0 || thetaDeg >= 90) {
     return { a: NaN, b: NaN, thetaRad: NaN };
   }
 
-  const thetaRad = thetaDeg * Math.PI / 180;
+  // 内部計算用の角度（接線は右上方向に開く）
+  const thetaCalcDeg = 360 - thetaDeg;
+  const thetaRad = thetaCalcDeg * Math.PI / 180;
   const sinAngle = Math.sin(thetaRad);
   const cosAngle = Math.cos(thetaRad);
 
+  // 接点座標（ワールド座標系）
   const tangentX = radius * cosAngle;
   const tangentY = radius * sinAngle;
 
   // A: 円の中心から接点までの水平距離（x 座標）
   const a = tangentX;
-  // B: 円の下端から接点までの縦距離
-  const b = radius * (1 - sinAngle);
+  // B: 円の下端（y = -radius）から接点までの縦距離
+  const b = radius + tangentY;
 
   return {
     a,
@@ -619,13 +623,17 @@ function updateTab3Outputs() {
     cVal <= 50 &&
     cVal >= b
   ) {
-    const dx = Math.sin(thetaRad);
-    const dy = +Math.cos(thetaRad);
+    // C の高さ（円の中心を 0、上が +、下が −）に変換
     const yTarget = cVal - radiusVal;
     yFromBottom = yTarget;
-    const t = dy !== 0 ? (yTarget - tangentPoint.y) / dy : NaN;
-    if (Number.isFinite(t) && t >= 0) {
-      xAtC = tangentPoint.x + dx * t;
+
+    const sinTheta = Math.sin(thetaRad);
+    const cosTheta = Math.cos(thetaRad);
+
+    // 接線の方程式 : cosθ * x + sinθ * y = r
+    // y = yTarget を代入して x を解く
+    if (Math.abs(cosTheta) > 1e-8) {
+      xAtC = (radiusVal - sinTheta * yTarget) / cosTheta;
       cLinePoint = { x: xAtC, y: yFromBottom };
     }
   }
@@ -744,7 +752,8 @@ function drawTab3Diagram(values) {
   const yFromBottomCanvas = Number.isFinite(yFromBottom) ? toCanvas(0, yFromBottom) : null;
   const cLinePointCanvas = cLinePoint ? toCanvas(cLinePoint.x, cLinePoint.y) : null;
 
-  const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
+   // ★ここだけ差し替え
+  const dir = { x: -Math.sin(thetaRad), y: Math.cos(thetaRad) };
   const lineLength = radiusPx * 1.6;
   const lineStart = tangentCanvas;
   const lineEnd = {
