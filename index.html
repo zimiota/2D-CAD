@@ -620,7 +620,7 @@ function updateTab3Outputs() {
     cVal >= b
   ) {
     const dx = Math.sin(thetaRad);
-    const dy = -Math.cos(thetaRad);
+    const dy = +Math.cos(thetaRad);
     const yTarget = cVal - radiusVal;
     yFromBottom = yTarget;
     const t = dy !== 0 ? (yTarget - tangentPoint.y) / dy : NaN;
