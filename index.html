@@ -622,9 +622,9 @@ function updateTab3Outputs() {
     if (cVal >= 0 && cVal <= cMax) {
       yFromBottom = -radiusVal + cVal;
       const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
-      if (Math.abs(dir.y) > 1e-9) {
+      if (Math.abs(dir.y) > 1e-9 && yFromBottom >= tangentPoint.y) {
         const t = (yFromBottom - tangentPoint.y) / dir.y;
-        if (t >= 0) {
+        if (t <= 0) {
           xAtC = tangentPoint.x + dir.x * t;
           cLinePoint = { x: xAtC, y: yFromBottom };
         }
