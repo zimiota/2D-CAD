@@ -749,7 +749,7 @@ function drawTab3Diagram(values) {
   const lineStart = tangentCanvas;
   const lineEnd = {
     x: tangentCanvas.x + dir.x * lineLength,
-    y: tangentCanvas.y - dir.y * lineLength,
+    y: tangentCanvas.y + dir.y * lineLength,
   };
 
   tab3Ctx.save();
