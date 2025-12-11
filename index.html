@@ -589,7 +589,7 @@ function updateTab3Outputs() {
     tab3RadiusSlider.max = Math.max(Number(tab3RadiusSlider.max), radiusVal);
     tab3RadiusSlider.value = radiusVal;
 
-    const recommendedCMax = radiusVal * 2;
+    const recommendedCMax = Math.max(50, radiusVal * 2);
     const currentCMax = Number(tab3CSlider.max);
     if (!Number.isFinite(currentCMax) || currentCMax < recommendedCMax) {
       tab3CSlider.max = recommendedCMax;
@@ -618,13 +618,13 @@ function updateTab3Outputs() {
     thetaDeg < 90 &&
     Number.isFinite(cVal)
   ) {
-    const cMax = radiusVal * 2;
+    const cMax = Math.max(radiusVal * 2, Number(tab3CSlider.max));
     if (cVal >= 0 && cVal <= cMax) {
       yFromBottom = -radiusVal + cVal;
       const dir = { x: Math.sin(thetaRad), y: -Math.cos(thetaRad) };
-      if (Math.abs(dir.y) > 1e-9 && yFromBottom >= tangentPoint.y) {
+      if (Math.abs(dir.y) > 1e-9) {
         const t = (yFromBottom - tangentPoint.y) / dir.y;
-        if (t <= 0) {
+        if (t >= 0) {
           xAtC = tangentPoint.x + dir.x * t;
           cLinePoint = { x: xAtC, y: yFromBottom };
         }
