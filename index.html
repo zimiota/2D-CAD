@@ -9,21 +9,13 @@
     body { margin: 0; overflow: auto; font-family: sans-serif; }
     canvas { background: #f0f0f0; display: block; }
     #angle-panel {
-      position: absolute;
-      top: 148px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1;
       background: #ffffff;
-      margin-top: 200px;
       padding: 10px 16px;
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
       white-space: nowrap;
     }
     #radius-panel {
-      position: absolute;
-      z-index: 1;
       background: rgba(255, 255, 255, 0.85);
       border-radius: 8px;
       padding: 8px 14px;
@@ -34,6 +26,15 @@
     #radius-panel input {
       font-size: 48px;
       padding: 12px 18px;
+    }
+    .calc1-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin: 20px auto 10px;
+      max-width: 1200px;
     }
     .box {
       margin-bottom: 10px;
@@ -175,18 +176,20 @@
     </div>
   </div>
 <div id="calc1" class="tab-content active">
-  <div id="angle-panel">
-    <label>
-      角度（度数）:
-      <input id="angle-input" type="number" value="0" min="0" max="90">
-      <input id="angle-slider" type="range" value="0" min="0" max="90">
-    </label>
-  </div>
-  <div id="radius-panel">
-    <label>
-      半径:
-      <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
-    </label>
+  <div class="calc1-controls">
+    <div id="angle-panel">
+      <label>
+        角度（度数）:
+        <input id="angle-input" type="number" value="0" min="0" max="90">
+        <input id="angle-slider" type="range" value="0" min="0" max="90">
+      </label>
+    </div>
+    <div id="radius-panel">
+      <label>
+        半径:
+        <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
+      </label>
+    </div>
   </div>
   <canvas id="cad"></canvas>
 
@@ -266,12 +269,6 @@
       const horizontalTangentX = cornerX + tangentLength;
       const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
       const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
-      if (radiusPanel) {
-        radiusPanel.style.left = `${centerX + radius * 0.5 + 100}px`;
-        radiusPanel.style.top = `${centerY + 200}px`;
-        radiusPanel.style.transform = "translate(-50%, -50%)";
-      }
-
       // 円
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
