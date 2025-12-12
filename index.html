@@ -258,9 +258,8 @@
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height * 0.42;
-      // 円のピクセル半径は常に固定
+      // 円のピクセル半径はキャンバスに収まるようスケーリング
       const baseLogicalRadius = 3;
-      const radius = basePixelRadius;
       // 入力角度は「垂直からの傾き」として扱い、
       // 内部計算では (90° + 入力角度) を用いる
       const angleRad = (90 + angleDeg) * Math.PI / 180;
@@ -274,62 +273,128 @@
       // B は従来通り: B = r * (1 + cos θ)
       const dimensionB = dimensionRadius * (1 + Math.cos(angleRad));
 
-      const d = radius / sinHalf;
-      const cornerX = centerX - d * Math.cos(half);
-      const cornerY = centerY - d * Math.sin(half);
-      const tangentLength = Math.sqrt(Math.max(0, d * d - radius * radius));
-      const horizontalTangentX = cornerX + tangentLength;
-      const angledTangentX = cornerX + tangentLength * Math.cos(angleRad);
-      const angledTangentY = cornerY + tangentLength * Math.sin(angleRad);
+      const margin = 36;
+      const computeGeometry = (radius) => {
+        const extension = radius * 2;
+        const d = radius / sinHalf;
+        const cornerX = centerX - d * Math.cos(half);
+        const cornerY = centerY - d * Math.sin(half);
+        const tangentLength = Math.sqrt(Math.max(0, d * d - radius * radius));
+        const tangentX = cornerX + tangentLength * Math.cos(angleRad);
+        const tangentY = cornerY + tangentLength * Math.sin(angleRad);
+        const horizontalTangentX = cornerX + tangentLength;
+
+        const angledLineEnd = {
+          x: cornerX + (tangentLength + extension) * Math.cos(angleRad),
+          y: cornerY + (tangentLength + extension) * Math.sin(angleRad),
+        };
+        const horizontalLineEnd = { x: horizontalTangentX + extension, y: cornerY };
+        const bottomY = centerY + radius;
+
+        const lineDx = tangentX - cornerX;
+        const lineDy = tangentY - cornerY;
+        const lineLen = Math.hypot(lineDx, lineDy) || 1;
+        const leftNormal = { x: -lineDy / lineLen, y: lineDx / lineLen };
+        const bBaseX = (cornerX + tangentX) / 2;
+        const bBaseY = (cornerY + tangentY) / 2 - 10;
+        const bOffset = 40;
+        const bPosX = bBaseX + leftNormal.x * bOffset;
+        const bPosY = bBaseY + leftNormal.y * bOffset;
+
+        const aTextPos = { x: (cornerX + centerX) / 2, y: cornerY - 20 };
+
+        const minX = Math.min(
+          centerX - radius,
+          centerX + radius,
+          cornerX,
+          horizontalLineEnd.x,
+          angledLineEnd.x,
+          tangentX,
+          aTextPos.x,
+          bPosX,
+        );
+        const maxX = Math.max(
+          centerX - radius,
+          centerX + radius,
+          cornerX,
+          horizontalLineEnd.x,
+          angledLineEnd.x,
+          tangentX,
+          aTextPos.x,
+          bPosX,
+        );
+        const minY = Math.min(
+          centerY - radius,
+          centerY + radius,
+          cornerY,
+          angledLineEnd.y,
+          bottomY,
+          aTextPos.y,
+          bPosY,
+        );
+        const maxY = Math.max(
+          centerY - radius,
+          centerY + radius,
+          cornerY,
+          angledLineEnd.y,
+          bottomY,
+          aTextPos.y,
+          bPosY,
+        );
+
+        return {
+          radius,
+          extension,
+          cornerX,
+          cornerY,
+          tangentX,
+          tangentY,
+          horizontalLineEnd,
+          angledLineEnd,
+          bottomY,
+          bPosX,
+          bPosY,
+          aTextPos,
+          leftNormal,
+          bounds: { minX, maxX, minY, maxY },
+        };
+      };
+
+      const baseGeometry = computeGeometry(basePixelRadius);
+      const boundsWidth = baseGeometry.bounds.maxX - baseGeometry.bounds.minX;
+      const boundsHeight = baseGeometry.bounds.maxY - baseGeometry.bounds.minY;
+      const safeWidth = canvas.width - margin * 2;
+      const safeHeight = canvas.height - margin * 2;
+      const scale = Math.min(
+        1,
+        safeWidth / Math.max(boundsWidth, 1),
+        safeHeight / Math.max(boundsHeight, 1)
+      );
+      const radius = basePixelRadius * (Number.isFinite(scale) && scale > 0 ? scale : 1);
+      const geometry = computeGeometry(radius);
+
       // 円
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, geometry.radius, 0, Math.PI * 2);
       ctx.stroke();
 
       // 垂直線（中心から水平線まで）
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
-      ctx.lineTo(centerX, cornerY);
+      ctx.lineTo(centerX, geometry.cornerY);
       ctx.stroke();
-
-      const extension = radius * 2;
 
       // 右向きの線（接点からさらに延長）
       ctx.beginPath();
-      ctx.moveTo(cornerX, cornerY);
-      ctx.lineTo(horizontalTangentX + extension, cornerY);
+      ctx.moveTo(geometry.cornerX, geometry.cornerY);
+      ctx.lineTo(geometry.horizontalLineEnd.x, geometry.horizontalLineEnd.y);
       ctx.stroke();
 
       // α度の線（接点からさらに延長）
       ctx.beginPath();
-      ctx.moveTo(cornerX, cornerY);
-      ctx.lineTo(
-        cornerX + (tangentLength + extension) * Math.cos(angleRad),
-        cornerY + (tangentLength + extension) * Math.sin(angleRad)
-      );
+      ctx.moveTo(geometry.cornerX, geometry.cornerY);
+      ctx.lineTo(geometry.angledLineEnd.x, geometry.angledLineEnd.y);
       ctx.stroke();
-
-      // 接点の座標（斜め線と円の接点）
-      const tangentX = cornerX + tangentLength * Math.cos(angleRad);
-      const tangentY = cornerY + tangentLength * Math.sin(angleRad);
-
-      // 円の一番下（中心直下の水平線）
-      const bottomY = centerY + radius;
-
-      const verticalPx = bottomY - tangentY;
-      const horizontalPx = centerX - tangentX;
-
-      const unitPerPixel = (logicalRadius && radius) ? (logicalRadius / radius) : 0;
-      const verticalValue = verticalPx * unitPerPixel;
-      const horizontalValue = horizontalPx * unitPerPixel;
-
-      // 寸法値を小数点以下 3 桁で表示
-      ctx.save();
-      ctx.font = "36px sans-serif";
-      ctx.fillStyle = "#333";
-      ctx.textBaseline = "middle";
-
-      ctx.restore();
 
       // A/B 寸法表示
       ctx.save();
@@ -341,22 +406,13 @@
       ctx.textAlign = "center";
       ctx.fillText(
         `A: ${dimensionA.toFixed(3)}`,
-        (cornerX + centerX) / 2,
-        cornerY - 20
+        geometry.aTextPos.x,
+        geometry.aTextPos.y
       );
 
       // B: 斜線の左側に固定オフセットで配置
-      const lineDx = angledTangentX - cornerX;
-      const lineDy = angledTangentY - cornerY;
-      const lineLen = Math.hypot(lineDx, lineDy) || 1;
-      const leftNormal = { x: -lineDy / lineLen, y: lineDx / lineLen };
-      const bBaseX = (cornerX + tangentX) / 2;
-      const bBaseY = (cornerY + tangentY) / 2 - 10;
-      const bOffset = 40;
-      const bPosX = bBaseX + leftNormal.x * bOffset;
-      const bPosY = bBaseY + leftNormal.y * bOffset;
-      ctx.textAlign = leftNormal.x >= 0 ? "left" : "right";
-      ctx.fillText(`B: ${dimensionB.toFixed(3)}`, bPosX, bPosY);
+      ctx.textAlign = geometry.leftNormal.x >= 0 ? "left" : "right";
+      ctx.fillText(`B: ${dimensionB.toFixed(3)}`, geometry.bPosX, geometry.bPosY);
 
       ctx.restore();
     }
