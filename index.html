@@ -202,6 +202,7 @@
     const angleInput = document.getElementById("angle-input");
     const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
+    const defaultAngleDeg = 0;
     let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
     let logicalRadius = Number(radiusInput.value) || 3;
@@ -251,6 +252,14 @@
     }
     window.addEventListener("resize", resize);
 
+    const computeAngleParams = (deg) => {
+      const angleRad = (90 + deg) * Math.PI / 180;
+      const half = angleRad / 2;
+      const sinHalfRaw = Math.sin(half);
+      const sinHalf = Math.abs(sinHalfRaw) < 1e-6 ? (sinHalfRaw >= 0 ? 1e-6 : -1e-6) : sinHalfRaw;
+      return { angleRad, half, sinHalf };
+    };
+
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.lineWidth = 2;
@@ -262,10 +271,7 @@
       const baseLogicalRadius = 3;
       // 入力角度は「垂直からの傾き」として扱い、
       // 内部計算では (90° + 入力角度) を用いる
-      const angleRad = (90 + angleDeg) * Math.PI / 180;
-      const half = angleRad / 2;
-      const sinHalfRaw = Math.sin(half);
-      const sinHalf = Math.abs(sinHalfRaw) < 1e-6 ? (sinHalfRaw >= 0 ? 1e-6 : -1e-6) : sinHalfRaw;
+      const { angleRad, half, sinHalf } = computeAngleParams(angleDeg);
 
       const dimensionRadius = logicalRadius || 0;
       // A = r * cot(θ/2) = r * cos(θ/2) / sin(θ/2)
@@ -274,19 +280,20 @@
       const dimensionB = dimensionRadius * (1 + Math.cos(angleRad));
 
       const margin = 36;
-      const computeGeometry = (radius) => {
+      const computeGeometry = (radius, params) => {
+        const { angleRad: angleRadLocal, half: halfLocal, sinHalf: sinHalfLocal } = params;
         const extension = radius * 2;
-        const d = radius / sinHalf;
-        const cornerX = centerX - d * Math.cos(half);
-        const cornerY = centerY - d * Math.sin(half);
+        const d = radius / sinHalfLocal;
+        const cornerX = centerX - d * Math.cos(halfLocal);
+        const cornerY = centerY - d * Math.sin(halfLocal);
         const tangentLength = Math.sqrt(Math.max(0, d * d - radius * radius));
-        const tangentX = cornerX + tangentLength * Math.cos(angleRad);
-        const tangentY = cornerY + tangentLength * Math.sin(angleRad);
+        const tangentX = cornerX + tangentLength * Math.cos(angleRadLocal);
+        const tangentY = cornerY + tangentLength * Math.sin(angleRadLocal);
         const horizontalTangentX = cornerX + tangentLength;
 
         const angledLineEnd = {
-          x: cornerX + (tangentLength + extension) * Math.cos(angleRad),
-          y: cornerY + (tangentLength + extension) * Math.sin(angleRad),
+          x: cornerX + (tangentLength + extension) * Math.cos(angleRadLocal),
+          y: cornerY + (tangentLength + extension) * Math.sin(angleRadLocal),
         };
         const horizontalLineEnd = { x: horizontalTangentX + extension, y: cornerY };
         const bottomY = centerY + radius;
@@ -360,7 +367,7 @@
         };
       };
 
-      const baseGeometry = computeGeometry(basePixelRadius);
+      const baseGeometry = computeGeometry(basePixelRadius, computeAngleParams(defaultAngleDeg));
       const boundsWidth = baseGeometry.bounds.maxX - baseGeometry.bounds.minX;
       const boundsHeight = baseGeometry.bounds.maxY - baseGeometry.bounds.minY;
       const safeWidth = canvas.width - margin * 2;
@@ -371,7 +378,7 @@
         safeHeight / Math.max(boundsHeight, 1)
       );
       const radius = basePixelRadius * (Number.isFinite(scale) && scale > 0 ? scale : 1);
-      const geometry = computeGeometry(radius);
+      const geometry = computeGeometry(radius, { angleRad, half, sinHalf });
 
       // 円
       ctx.beginPath();
