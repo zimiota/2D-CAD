@@ -6,39 +6,8 @@
       <meta name="format-detection" content="telephone=no">
   <title>2D-CAD Prototype</title>
   <style>
-    body { margin: 0; overflow: auto; font-family: sans-serif; }
-    canvas { background: #f0f0f0; display: block; }
-    #angle-panel {
-      background: #ffffff;
-      padding: 10px 16px;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-      white-space: nowrap;
-    }
-    #radius-panel {
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 48px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-      white-space: nowrap;
-    }
-    #radius-panel input {
-      font-size: 48px;
-      padding: 12px 18px;
-    }
-    .calc1-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-      margin: 20px auto 10px;
-      max-width: 1200px;
-    }
-    .box {
-      margin-bottom: 10px;
-    }
+    body { margin: 0; overflow: auto; font-family: sans-serif; background: #f5f7fb; }
+    canvas { display: block; }
 .tabs-wrapper {
   margin-top: 14px;
 }
@@ -116,6 +85,39 @@
   letter-spacing: 0.02em;
 }
 
+    #calc1 .tab-section h2 {
+      margin-bottom: 18px;
+    }
+    #calc1 .input-row {
+      grid-template-columns: 240px 240px 1fr;
+      margin-bottom: 20px;
+    }
+    #calc1 .input-row input[type="number"] {
+      font-size: 36px;
+      padding: 10px 14px;
+    }
+    #calc1 .input-row input[type="range"] {
+      accent-color: #1f73ff;
+    }
+    #calc1 .input-row .note {
+      color: #445;
+      font-size: 24px;
+    }
+    #calc1 .canvas-frame {
+      margin-top: 28px;
+      background: #f8f9fb;
+      border: 1px solid #d5dce5;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    #cad {
+      width: 100%;
+      height: 640px;
+      background: #fff;
+      border-radius: 10px;
+    }
+
     #calc1 {
       font-size: 48px;
     }
@@ -176,30 +178,30 @@
     </div>
   </div>
 <div id="calc1" class="tab-content active">
-  <div class="calc1-controls">
-    <div id="angle-panel">
-      <label>
-        角度（度数）:
-        <input id="angle-input" type="number" value="0" min="0" max="90">
-        <input id="angle-slider" type="range" value="0" min="0" max="90">
-      </label>
+  <div class="tab-section">
+    <h2>円の角度と半径から A/B を描画</h2>
+    <div class="input-row">
+      <div>角度（度数）:</div>
+      <input id="angle-input" type="number" value="0" min="0" max="90">
+      <input id="angle-slider" type="range" value="0" min="0" max="90">
     </div>
-    <div id="radius-panel">
-      <label>
-        半径:
-        <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
-      </label>
+    <div class="input-row">
+      <div>半径:</div>
+      <input id="radius-input" type="number" value="3.0" min="0" step="0.1" max="999">
+      <div class="note">小数第 1 位で調整</div>
+    </div>
+    <div class="canvas-frame">
+      <canvas id="cad"></canvas>
     </div>
   </div>
-  <canvas id="cad"></canvas>
 
   <script>
     const canvas = document.getElementById("cad");
     const ctx = canvas.getContext("2d");
+    const canvasFrame = document.querySelector("#calc1 .canvas-frame");
     const angleInput = document.getElementById("angle-input");
     const angleSlider = document.getElementById("angle-slider");
     const radiusInput = document.getElementById("radius-input");
-    const radiusPanel = document.getElementById("radius-panel");
     let angleDeg = Number(angleInput.value) || 0;
     const basePixelRadius = 240;
     let logicalRadius = Number(radiusInput.value) || 3;
@@ -233,8 +235,18 @@
     radiusInput.addEventListener("blur", finalizeRadiusInput);
 
     function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      if (!canvasFrame) return;
+
+      const frameRect = canvasFrame.getBoundingClientRect();
+      const frameStyle = getComputedStyle(canvasFrame);
+      const paddingX = parseFloat(frameStyle.paddingLeft) + parseFloat(frameStyle.paddingRight);
+      const paddingY = parseFloat(frameStyle.paddingTop) + parseFloat(frameStyle.paddingBottom);
+      const availableWidth = Math.max(320, frameRect.width - paddingX);
+      const desiredHeight = Math.max(520, Math.min(760, availableWidth * 0.6)) + paddingY;
+
+      canvas.width = availableWidth;
+      canvas.height = desiredHeight - paddingY;
+      canvas.style.height = `${canvas.height}px`;
       draw();
     }
     window.addEventListener("resize", resize);
