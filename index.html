@@ -136,16 +136,16 @@
       accent-color: #1f73ff;
     }
 
-#tri-center {
-  width:100%;
-  display:flex;
-  justify-content:center;
-  margin-top:20px;
-}
-#triView {
-  border:1px solid #aaa;
-  background:#fff;
-}
+    #tri-center {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    #triView {
+      border: 1px solid #aaa;
+      background: #fff;
+    }
     .triangle {
       width: 0;
       height: 0;
@@ -153,19 +153,25 @@
       border-right: 50px solid transparent;
       border-top: 100px solid #c0d0ff;
     }
-    #angle2-panel label {
+    #calc2 .tab-section {
       font-size: 32px;
     }
-    #angle2-panel input {
-      font-size: 32px;
-      padding: 8px 12px;
+    #calc2 .input-row {
+      grid-template-columns: 240px 1fr 160px;
+      align-items: center;
     }
-    #angle2-panel > div {
+    #calc2 .input-row .note {
+      color: #445;
       font-size: 32px;
     }
-    #angle2-panel #phiVal,
-    #angle2-panel #alpha {
-      font-size: 32px;
+    #calc2 .angle2-description {
+      margin-top: 10px;
+      font-size: 22px;
+      color: #445;
+      line-height: 1.5;
+    }
+    #calc2 .angle2-description div + div {
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -428,18 +434,32 @@
   </script>
 </div>
   <div id="calc2" class="tab-content">
-  <div id="angle2-panel" style="margin: 10px auto; text-align: center; width: fit-content;">
-    <label>θ（初期角度）: <input id="theta" type="number" min="0" max="90" value="20">°</label><br>
-    <label>φ（回転角）: <input id="phi" type="range" min="0" max="90" value="0"> <span id="phiVal">0</span></label><br>
-    <div>見かけ角 α（度）: <span id="alpha">---</span></div>
-    <div style="font-size: 12px; margin-top: 6px; line-height: 1.5; text-align: left;">
+  <div class="tab-section">
+    <h2>2.5D Angle</h2>
+    <div class="input-row">
+      <div>θ（初期角度）:</div>
+      <input id="theta" type="number" min="0" max="90" value="20">
+      <div class="note">度</div>
+    </div>
+    <div class="input-row">
+      <div>φ（回転角）:</div>
+      <input id="phi" type="range" min="0" max="90" value="0">
+      <div class="note"><span id="phiVal">0</span></div>
+    </div>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="label">見かけ角 α（度）</div>
+        <span class="value" id="alpha">---</span>
+      </div>
+    </div>
+    <div class="angle2-description">
       <div>・回転角度 φ は X 軸に対する回転指示角。</div>
       <div>・直角三角形は垂直辺（右辺）を軸に回転。</div>
       <div>・見かけ角 α は斜辺の傾き θ と φ の組み合わせで決まる正面からの角度。</div>
     </div>
-  </div>
-  <div id="tri-center">
-    <canvas id="triView" width="500" height="400"></canvas>
+    <div id="tri-center">
+      <canvas id="triView" width="500" height="400"></canvas>
+    </div>
   </div>
 </div>
 <div id="calc3" class="tab-content">
